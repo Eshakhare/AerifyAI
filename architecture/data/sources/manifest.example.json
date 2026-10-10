@@ -1,0 +1,227 @@
+{
+ "schema_version": "0.8",
+ "city": "Delhi",
+ "delivery_scope": {
+   "scope_tiers": {
+     "demo_core": [
+       "public_map_and_nearby",
+       "airdelhi_and_context_ingestion",
+       "versioned_osm_osrm_roads",
+       "thirty_day_twelve_action_generator",
+       "officer_and_supervisor_workflow",
+       "frozen_evaluation_plans",
+       "checkpoint_and_overlap_evaluation",
+       "server_clock",
+       "contract_ci_and_staging"
+     ],
+     "optional_extensions": [
+       "live_hardware_adapter",
+       "automatic_earth_engine_refresh",
+       "optional_24h_checkpoint",
+       "bigquery_analytics_ai_mirror"
+     ]
+   },
+   "quality_gates_may_be_deferred": false
+ },
+ "source_inventory": [
+   {
+     "id": "iitd_bus_2020_2021",
+     "kind": "observed_historical_mobile",
+     "provider": "IIT Delhi",
+     "page": "https://www.cse.iitd.ac.in/pollutiondata/delhi/download",
+     "documented_range": ["2020-11", "2021-01"],
+     "documented_metrics": ["PM1_MASS", "PM2_5_MASS", "PM10_MASS", "GPS", "TIME"],
+     "documented_device_count": 13,
+     "license": "CC BY 4.0",
+     "downloaded": false,
+     "row_coverage_verified": false,
+     "anand_vihar_overlap_verified": false,
+     "role": "historical anchor and route playback"
+   },
+   {
+     "id": "airdelhi_delhi_seed",
+     "kind": "modeled_air_quality_context",
+     "page": "https://proceedings.neurips.cc/paper_files/paper/2023/file/ee799aff607fcf39c01df6391e96f92c-Paper-Datasets_and_Benchmarks.pdf",
+     "documented_metrics": ["PM2_5_MASS", "PM10_MASS", "NO2", "O3"],
+     "access_method_verified": false,
+     "license_terms_verified_for_intended_use": false,
+     "spatial_support_verified": false,
+     "role": "Delhi seed source for the demo; verify license and spatial support before numeric use"
+   },
+   {
+     "id": "cpcb_dpcc_station_candidate",
+     "kind": "observed_official_station",
+     "page": "https://airquality.cpcb.gov.in/ccr/",
+     "documented_metrics": ["PM2_5_MASS", "PM10_MASS", "NO2", "SO2", "CO", "O3", "INDIAN_AQI"],
+     "access_method_verified": false,
+     "reuse_terms_verified": false,
+     "candidate_station_ids": [],
+     "role": "official station and city context"
+   },
+   {
+     "id": "open_meteo_weather_candidate",
+     "kind": "modeled_weather_context",
+     "page": "https://open-meteo.com/en/docs/historical-weather-api",
+     "documented_metrics": ["TEMPERATURE", "RELATIVE_HUMIDITY", "PRECIPITATION_RATE", "WIND_SPEED", "WIND_DIRECTION"],
+     "documented_global_resolution_km": [9, 25],
+     "license_terms_verified_for_intended_use": false,
+     "role": "historical/current regional weather context"
+   },
+   {
+     "id": "sentinel_5p_candidate",
+     "kind": "satellite_atmospheric_context",
+     "page": "https://dataspace.copernicus.eu/data-collections/copernicus-sentinel-missions/sentinel-5p",
+     "candidate_metrics": ["NO2", "SO2", "AEROSOL_INDEX"],
+     "historical_coverage_verified": false,
+     "access_method_verified": false,
+     "quality_filters_defined": false,
+     "role": "regional atmospheric context; no factory causation"
+   },
+   {
+     "id": "cams_air_quality_model_candidate",
+     "kind": "modeled_air_quality_context",
+     "page": "https://open-meteo.com/en/docs/air-quality-api",
+     "candidate_metrics": ["PM2_5_MASS", "PM10_MASS", "NO2", "SO2", "CO", "O3", "HCHO", "TVOC"],
+     "documented_global_resolution_km": 45,
+     "license_terms_verified_for_intended_use": false,
+     "role": "regional modeled context only"
+   },
+   {
+     "id": "delhi_industrial_registry_candidate",
+     "kind": "geospatial_source_registry",
+     "provider": null,
+     "page": null,
+     "license_verified": false,
+     "geometry_verified": false,
+     "role": "possible facilities/industrial land within 1 km and 3 km"
+   },
+   {
+     "id": "delhi_district_boundaries_candidate",
+     "kind": "administrative_geometry",
+     "provider": null,
+     "page": null,
+     "district_count_expected": 11,
+     "effective_date_verified": false,
+     "license_verified": false,
+     "role": "city district drill-down"
+   },
+   {
+     "id": "google_air_quality_optional",
+     "kind": "modeled_air_quality_context",
+     "page": "https://developers.google.com/maps/documentation/air-quality/overview",
+     "documented_temporal_resolution": "hourly",
+     "documented_nominal_resolution_m": 500,
+     "history_window": "up to 30 days per supported request/availability",
+     "terms_and_cache_policy_verified": false,
+     "role": "optional contextual gap filling; never a street sensor"
+   },
+   {
+     "id": "openaq_optional",
+     "kind": "observed_station_aggregator",
+     "page": "https://docs.openaq.org/",
+     "access_method_verified": false,
+     "original_provider_attribution_required": true,
+     "role": "optional station discovery/reference"
+   },
+   {
+     "id": "delhi_osm_geofabrik_p0",
+     "kind": "road_network_snapshot",
+     "provider": "Geofabrik / OpenStreetMap contributors",
+     "page": "https://download.geofabrik.de/asia/india/northern-zone.html",
+     "license": "ODbL 1.0",
+     "attribution": "© OpenStreetMap contributors",
+     "snapshot_date": "pending_download",
+     "sha256": "pending_download",
+     "clip_geometry_id": "delhi_boundary_accepted_v1",
+     "road_network_version": "pending_snapshot_version",
+     "segmentation_version": "delhi_osm_250m_v1",
+     "matching_method_version": "osrm_match_v1",
+     "max_snap_distance_m": 40,
+     "minimum_match_confidence": 0.5,
+     "role": "Demo road graph, map matching and stable segment identity"
+   }
+ ],
+ "synthetic_generator": {
+   "duration_days": 30,
+   "virtual_bus_count": [4, 6],
+   "representative_route_count": [6, 8],
+   "route_planning": {
+     "mode": "joint_with_action_zones",
+     "requirement": "every action and reference zone sits on a route version",
+     "synthetic_corridor_purpose": "SYNTHETIC_CORRIDOR",
+     "observed_trace_purpose": "OBSERVED_TRACE",
+     "per_zone_anchor_overlap_table": "task 1.5 output consumed by display wording and Near You fallback"
+   },
+   "operating_hours_per_day": 16,
+   "operational_interval_seconds": 60,
+   "six_bus_expected_rows": 172800,
+   "action_case_count": 12,
+   "action_case_mix": {"sustained_improvement": 3, "temporary_improvement": 3, "no_effect": 3, "inconclusive_or_confounded": 3},
+   "required_overlap_case_count": 1,
+   "scenario_branches": ["WITHOUT_ACTION", "WITH_ACTION"],
+   "principal_action": "water_suppression",
+   "flagship_zone_candidate": "Palam–Dwarka corridor, Delhi",
+   "flagship_confirmation": "pending Gate 1 per-zone anchor-overlap table",
+   "other_action_zones_include": ["Anand Vihar ISBT vicinity, Delhi"],
+   "reference_zone_status": "pending map and pre-trend review",
+   "required_anchor_metrics": ["PM2_5_MASS", "PM10_MASS"],
+   "optional_metrics": ["PM1_MASS", "PM0_3_COUNT", "CO2", "HCHO", "TVOC"],
+   "generator_version": "pending",
+   "seed": null,
+   "display_label_with_anchors": "Synthetic demo — based on historical PM observations and contextual models",
+   "display_label_without_anchors": "Fully synthetic demonstration — no verified observed anchors in this zone",
+   "display_label_source": "computed from the per-zone anchor-overlap table, never hardcoded",
+   "lineage_required": true,
+   "current_context_may_be_backdated_as_observed": false
+ },
+ "action_evaluation": {
+   "time_anchor": "action_completed_at",
+   "water_suppression_checkpoint_offsets_minutes": [0, 60, 180, 360, 720],
+   "optional_checkpoint_offsets_minutes": [1440],
+   "late_completion_entry_runs_due_checkpoints": true,
+   "production_clock": "real",
+   "demo_clock": "virtual_or_retroactive",
+   "test_clock": "injected"
+ },
+ "evaluation_policy": {
+   "version": "water_suppression_demo_policy_v1",
+   "frozen_before_action_start": true,
+   "minimum_coverage_ratio": 0.75,
+   "minimum_independent_15m_bins": 3,
+   "rain_rate_mm_h": 0.5,
+   "rain_minimum_post_bins": 2,
+   "wind_speed_change_m_s": 2,
+   "wind_direction_shift_degrees": 45,
+   "traffic_index_divergence": 0.2,
+   "overlap_policy_version": "action_overlap_v1",
+   "statistical_weather_adjustment_enabled": false,
+   "production_observed_publication_enabled": false
+ },
+ "clock_policy": {
+   "authority": "server_clock_service",
+   "client_override_allowed": false,
+   "modes": ["REAL", "SCENARIO", "TEST"],
+   "cache_key_fields": ["schema_version", "scenario_id", "clock_revision", "effective_time_bucket"]
+ },
+ "storage_policy": {
+   "raw_bronze": "versioned_cloud_storage",
+   "operational_and_transactional_truth": "google_cloud_sql_postgresql_postgis",
+   "bigquery_role": "optional_async_analytics_and_sql_native_ai_mirror",
+   "bigquery_on_synchronous_api_path": false,
+   "llm_authoritative_for_aqi_or_effects": false
+ },
+ "map_policy": {
+   "administrative_level": "official_delhi_district",
+   "analysis_cell_target_km": [2, 3],
+   "road_values_require_eligible_observation": true,
+   "no_data_is_explicit": true,
+   "road_segment_target_m": [100, 500],
+   "operational_interval_seconds": 60,
+   "comparison_windows_minutes": [15, 30, 60],
+   "coverage_and_freshness_thresholds": "pending",
+   "stable_hotspot_repeat_pass_gate": "pending"
+ }
+}
+
+
+

@@ -1,0 +1,28 @@
+{
+ "id": "cam_event_001",
+ "hotspot_id": "hotspot_anand_vihar_demo_01",
+ "camera_source": "curated_demo",
+ "media_type": "video",
+ "detection_method": "manually_curated",
+ "label": "suspected_visible_emission_context",
+ "recorded_at": "2026-09-20T08:15:00Z",
+ "scenario_event_at": "2026-10-08T09:45:00Z",
+ "position": {"lat": 28.6469, "lng": 77.3160},
+ "evidence_access": "restricted_media",
+ "media_object_id": "demo-clip-private-001",
+ "illustrative_only": true,
+ "provenance": {
+   "origin": "synthetic_scenario",
+   "dataset_id": "aerify_demo_30d_v1",
+   "source_id": "curated_clip_001",
+   "provider": "Aerify demo team",
+   "license_id": null,
+   "method_version": "manual_media_link_v1",
+   "scenario_id": "water_suppression_sustained_01",
+   "generator_version": "0.5.0",
+   "anchor_record_ids": ["team_media_capture_20260920_001"]
+ }
+}
+
+
+

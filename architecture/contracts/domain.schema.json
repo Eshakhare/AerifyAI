@@ -1,0 +1,513 @@
+{
+ "$schema": "https://json-schema.org/draft/2020-12/schema",
+ "$id": "https://example.invalid/aerify/contracts/domain.schema.json",
+ "title": "Aerify AI domain DTOs — hybrid evidence draft",
+ "schema_version": "0.8",
+ "description": "Draft transport shapes for observed, modeled, synthetic and derived air-quality records, including immutable zones/routes/evaluation plans, audited action revisions, server clock metadata and AQI sufficiency.",
+ "$defs": {
+   "UtcTime": {
+     "type": "string",
+     "format": "date-time",
+     "pattern": "Z$"
+   },
+   "GeoPoint": {
+     "type": "object",
+     "additionalProperties": false,
+     "required": ["lat", "lng"],
+     "properties": {
+       "lat": {"type": "number", "minimum": -90, "maximum": 90},
+       "lng": {"type": "number", "minimum": -180, "maximum": 180}
+     }
+   },
+   "Metric": {
+     "enum": [
+       "PM1_MASS",
+       "PM2_5_MASS",
+       "PM10_MASS",
+       "PM0_3_COUNT",
+       "CO2",
+       "HCHO",
+       "TVOC",
+       "NO2",
+       "SO2",
+       "CO",
+       "O3",
+       "TEMPERATURE",
+       "RELATIVE_HUMIDITY",
+       "PRECIPITATION_RATE",
+       "WIND_SPEED",
+       "WIND_DIRECTION",
+       "INDIAN_AQI"
+     ]
+   },
+   "Origin": {
+     "enum": ["observed", "modeled_context", "synthetic_scenario", "derived"]
+   },
+   "EvidenceState": {
+     "enum": ["DIRECTLY_OBSERVED", "OBSERVED_NEARBY", "MODEL_ESTIMATED", "SYNTHETIC", "INSUFFICIENT_EVIDENCE"]
+   },
+   "SpatialSupport": {
+     "type": "object",
+     "additionalProperties": false,
+     "required": ["kind", "support_id"],
+     "properties": {
+       "kind": {"enum": ["point", "road_segment", "station", "grid_cell", "satellite_footprint", "analysis_cell", "district", "city"]},
+       "support_id": {"type": "string", "minLength": 1},
+       "position": {"anyOf": [{"$ref": "#/$defs/GeoPoint"}, {"type": "null"}]},
+       "geometry_ref": {"type": ["string", "null"]},
+       "nominal_resolution_m": {"type": ["number", "null"], "exclusiveMinimum": 0},
+       "radius_m": {"type": ["number", "null"], "minimum": 0}
+     }
+   },
+   "GeoJSONGeometry": {
+     "type": "object",
+     "additionalProperties": false,
+     "required": ["type", "coordinates"],
+     "properties": {
+       "type": {"enum": ["Point", "MultiPoint", "LineString", "MultiLineString", "Polygon", "MultiPolygon"]},
+       "coordinates": true
+     }
+   },
+   "GeometryTransport": {
+     "type": "object",
+     "additionalProperties": false,
+     "required": ["encoding", "data"],
+     "properties": {
+       "encoding": {"const": "geojson"},
+       "data": {"$ref": "#/$defs/GeoJSONGeometry"}
+     }
+   },
+   "Provenance": {
+     "type": "object",
+     "additionalProperties": false,
+     "required": ["origin", "dataset_id", "source_id"],
+     "properties": {
+       "origin": {"$ref": "#/$defs/Origin"},
+       "dataset_id": {"type": "string", "minLength": 1},
+       "source_id": {"type": "string", "minLength": 1},
+       "provider": {"type": ["string", "null"]},
+       "license_id": {"type": ["string", "null"]},
+       "method_version": {"type": ["string", "null"]},
+       "scenario_id": {"type": ["string", "null"]},
+       "generator_version": {"type": ["string", "null"]},
+       "anchor_record_ids": {"type": "array", "items": {"type": "string"}, "uniqueItems": true}
+     },
+     "allOf": [
+       {
+         "if": {"properties": {"origin": {"const": "synthetic_scenario"}}, "required": ["origin"]},
+         "then": {
+           "required": ["scenario_id", "generator_version"],
+           "properties": {
+             "scenario_id": {"type": "string", "minLength": 1},
+             "generator_version": {"type": "string", "minLength": 1},
+             "anchor_record_ids": {"type": "array", "minItems": 1, "items": {"type": "string"}, "uniqueItems": true}
+           }
+         }
+       }
+     ]
+   },
+   "Measurement": {
+     "type": "object",
+     "additionalProperties": false,
+     "required": ["id", "metric", "value", "unit", "event_time", "processed_at", "spatial_support", "provenance", "quality_flags", "evidence_state"],
+     "properties": {
+       "id": {"type": "string", "minLength": 1},
+       "metric": {"$ref": "#/$defs/Metric"},
+       "value": {"type": "number"},
+       "unit": {"enum": ["ug/m3", "particles/L", "ppm", "ppb", "mg/m3", "degC", "percent", "mm/h", "m/s", "degrees", "aqi"]},
+       "event_time": {"$ref": "#/$defs/UtcTime"},
+       "event_time_end": {"anyOf": [{"$ref": "#/$defs/UtcTime"}, {"type": "null"}]},
+       "processed_at": {"$ref": "#/$defs/UtcTime"},
+       "generated_at": {"anyOf": [{"$ref": "#/$defs/UtcTime"}, {"type": "null"}]},
+       "device_id": {"type": ["string", "null"]},
+       "raw_record_id": {"type": ["string", "null"]},
+       "calibration_version": {"type": ["string", "null"]},
+       "road_network_version": {"type": ["string", "null"]},
+       "segmentation_version": {"type": ["string", "null"]},
+       "matching_method_version": {"type": ["string", "null"]},
+       "map_match_confidence": {"type": ["number", "null"], "minimum": 0, "maximum": 1},
+       "snapped_distance_m": {"type": ["number", "null"], "minimum": 0},
+       "original_position": {"anyOf": [{"$ref": "#/$defs/GeoPoint"}, {"type": "null"}]},
+       "evidence_state": {"$ref": "#/$defs/EvidenceState"},
+       "spatial_support": {"$ref": "#/$defs/SpatialSupport"},
+       "quality_flags": {
+         "type": "array",
+         "uniqueItems": true,
+         "items": {
+           "enum": ["uncalibrated", "suspect_outlier", "humidity_sensitive", "cloud_affected", "stale", "low_coverage", "time_mismatch", "modeled_only", "synthetic_only", "map_match_rejected", "multi_action_contamination"]
+         }
+       },
+       "provenance": {"$ref": "#/$defs/Provenance"}
+     },
+     "allOf": [
+       {
+         "if": {"properties": {"metric": {"enum": ["PM1_MASS", "PM2_5_MASS", "PM10_MASS"]}}, "required": ["metric"]},
+         "then": {"properties": {"unit": {"const": "ug/m3"}, "value": {"minimum": 0}}}
+       },
+       {
+         "if": {"properties": {"metric": {"const": "PM0_3_COUNT"}}, "required": ["metric"]},
+         "then": {"properties": {"unit": {"const": "particles/L"}, "value": {"minimum": 0}}}
+       },
+       {
+         "if": {"properties": {"metric": {"const": "RELATIVE_HUMIDITY"}}, "required": ["metric"]},
+         "then": {"properties": {"unit": {"const": "percent"}, "value": {"minimum": 0, "maximum": 100}}}
+       },
+       {
+         "if": {"properties": {"metric": {"const": "WIND_DIRECTION"}}, "required": ["metric"]},
+         "then": {"properties": {"unit": {"const": "degrees"}, "value": {"minimum": 0, "maximum": 360}}}
+       }
+     ]
+   },
+   "Coverage": {
+     "type": "object",
+     "additionalProperties": false,
+     "required": ["state", "sample_count", "source_count", "last_observation_at"],
+     "properties": {
+       "state": {"enum": ["current", "stale", "sparse", "modeled_only", "synthetic_only", "no_data"]},
+       "sample_count": {"type": "integer", "minimum": 0},
+       "source_count": {"type": "integer", "minimum": 0},
+       "last_observation_at": {"anyOf": [{"$ref": "#/$defs/UtcTime"}, {"type": "null"}]},
+       "freshness_seconds": {"type": ["integer", "null"], "minimum": 0},
+       "coverage_ratio": {"type": ["number", "null"], "minimum": 0, "maximum": 1}
+     }
+   },
+   "MapAggregate": {
+     "type": "object",
+     "additionalProperties": false,
+     "required": ["id", "level", "name", "metric", "value", "unit", "window_start", "window_end", "coverage", "provenance_mix", "evidence_state", "method_version"],
+     "properties": {
+       "id": {"type": "string"},
+       "level": {"enum": ["city", "district", "analysis_cell", "road_segment"]},
+       "parent_id": {"type": ["string", "null"]},
+       "name": {"type": "string"},
+       "metric": {"$ref": "#/$defs/Metric"},
+       "value": {"type": ["number", "null"]},
+       "unit": {"type": "string"},
+       "category": {"type": ["string", "null"]},
+       "window_start": {"$ref": "#/$defs/UtcTime"},
+       "window_end": {"$ref": "#/$defs/UtcTime"},
+       "coverage": {"$ref": "#/$defs/Coverage"},
+       "evidence_state": {"$ref": "#/$defs/EvidenceState"},
+       "method_version": {"type": "string", "minLength": 1},
+       "provenance_mix": {"type": "array", "items": {"$ref": "#/$defs/Origin"}, "uniqueItems": true},
+       "geometry_ref": {"type": ["string", "null"]}
+     }
+   },
+   "NearbySourceContext": {
+     "type": "object",
+     "additionalProperties": false,
+     "required": ["id", "name", "source_type", "distance_m", "registry_source_id", "causation_claimed"],
+     "properties": {
+       "id": {"type": "string"},
+       "name": {"type": "string"},
+       "source_type": {"enum": ["industrial_facility", "industrial_land_use", "major_road", "construction", "other"]},
+       "distance_m": {"type": "number", "minimum": 0},
+       "bearing_deg": {"type": ["number", "null"], "minimum": 0, "maximum": 360},
+       "wind_alignment": {"enum": ["upwind", "downwind", "crosswind", "unknown"]},
+       "registry_source_id": {"type": "string"},
+       "satellite_measurement_ids": {"type": "array", "items": {"type": "string"}, "uniqueItems": true},
+       "causation_claimed": {"const": false}
+     }
+   },
+   "ScenarioRun": {
+     "type": "object",
+     "additionalProperties": false,
+     "required": ["id", "scenario_time", "generated_at", "generator_version", "config_hash", "seed", "anchor_record_ids", "context_record_ids", "generated_metrics", "assumptions", "display_label", "branches", "clock_mode"],
+     "properties": {
+       "id": {"type": "string"},
+       "scenario_time": {"$ref": "#/$defs/UtcTime"},
+       "generated_at": {"$ref": "#/$defs/UtcTime"},
+       "generator_version": {"type": "string", "minLength": 1},
+       "config_hash": {"type": "string", "minLength": 1},
+       "seed": {"type": "integer"},
+       "anchor_record_ids": {"type": "array", "minItems": 1, "items": {"type": "string"}, "uniqueItems": true},
+       "context_record_ids": {"type": "array", "items": {"type": "string"}, "uniqueItems": true},
+       "route_version_ids": {"type": "array", "items": {"type": "string"}, "uniqueItems": true},
+       "generated_metrics": {"type": "array", "minItems": 1, "items": {"$ref": "#/$defs/Metric"}, "uniqueItems": true},
+       "assumptions": {"type": "array", "items": {"type": "string"}},
+       "time_alignment": {"enum": ["historical_matched", "current_context_conditioned", "fully_synthetic_context"]},
+       "branches": {
+         "type": "array",
+         "minItems": 2,
+         "uniqueItems": true,
+         "items": {"enum": ["WITHOUT_ACTION", "WITH_ACTION"]}
+       },
+       "clock_mode": {"enum": ["real", "virtual", "retroactive", "injected_test"]},
+       "display_label": {"type": "string", "minLength": 1}
+     }
+   },
+   "ZoneVersion": {
+     "type": "object",
+     "additionalProperties": false,
+     "required": ["id", "zone_id", "version", "purpose", "geometry", "geometry_hash", "source_dataset_id", "effective_at", "created_at"],
+     "properties": {
+       "id": {"type": "string", "minLength": 1},
+       "zone_id": {"type": "string", "minLength": 1},
+       "version": {"type": "integer", "minimum": 1},
+       "purpose": {"enum": ["ACTION", "REFERENCE", "DISPLAY"]},
+       "name": {"type": "string"},
+       "geometry": {"$ref": "#/$defs/GeometryTransport"},
+       "geometry_ref": {"type": ["string", "null"]},
+       "geometry_hash": {"type": "string", "minLength": 1},
+       "source_dataset_id": {"type": "string", "minLength": 1},
+       "effective_at": {"$ref": "#/$defs/UtcTime"},
+       "created_at": {"$ref": "#/$defs/UtcTime"}
+     }
+   },
+   "RouteVersion": {
+     "type": "object",
+     "additionalProperties": false,
+     "required": ["id", "route_id", "version", "purpose", "geometry", "geometry_hash", "source_dataset_id", "road_network_version", "segmentation_version", "device_ids", "effective_at", "created_at"],
+     "properties": {
+       "id": {"type": "string", "minLength": 1},
+       "route_id": {"type": "string", "minLength": 1},
+       "version": {"type": "integer", "minimum": 1},
+       "purpose": {"enum": ["OBSERVED_TRACE", "SYNTHETIC_CORRIDOR"]},
+       "name": {"type": "string"},
+       "geometry": {"$ref": "#/$defs/GeometryTransport"},
+       "geometry_ref": {"type": ["string", "null"]},
+       "geometry_hash": {"type": "string", "minLength": 1},
+       "source_dataset_id": {"type": "string", "minLength": 1},
+       "road_network_version": {"type": "string", "minLength": 1},
+       "segmentation_version": {"type": "string", "minLength": 1},
+       "matching_method_version": {"type": ["string", "null"]},
+       "device_ids": {"type": "array", "minItems": 1, "items": {"type": "string"}, "uniqueItems": true},
+       "effective_at": {"$ref": "#/$defs/UtcTime"},
+       "created_at": {"$ref": "#/$defs/UtcTime"}
+     }
+   },
+   "EvaluationPlan": {
+     "type": "object",
+     "additionalProperties": false,
+     "required": ["id", "version", "status", "action_zone_version_id", "reference_zone_version_ids", "checkpoint_offsets_minutes", "window_minutes", "minimum_coverage_ratio", "minimum_independent_bins", "reference_selection_method_version", "confounder_policy_version", "overlap_policy_version", "road_network_version", "segmentation_version", "matching_method_version", "created_at", "frozen_at"],
+     "properties": {
+       "id": {"type": "string", "minLength": 1},
+       "version": {"type": "integer", "minimum": 1},
+       "status": {"const": "FROZEN"},
+       "action_zone_version_id": {"type": "string", "minLength": 1},
+       "reference_zone_version_ids": {"type": "array", "minItems": 1, "uniqueItems": true, "items": {"type": "string"}},
+       "checkpoint_offsets_minutes": {"type": "array", "minItems": 1, "uniqueItems": true, "items": {"type": "integer", "minimum": 0}},
+       "window_minutes": {"type": "array", "minItems": 1, "uniqueItems": true, "items": {"enum": [15, 30, 60]}},
+       "minimum_coverage_ratio": {"type": "number", "minimum": 0, "maximum": 1},
+       "minimum_independent_bins": {"type": "integer", "minimum": 1},
+       "reference_selection_method_version": {"type": "string", "minLength": 1},
+       "confounder_policy_version": {"type": "string", "minLength": 1},
+       "overlap_policy_version": {"type": "string", "minLength": 1},
+       "road_network_version": {"type": "string", "minLength": 1},
+       "segmentation_version": {"type": "string", "minLength": 1},
+       "matching_method_version": {"type": "string", "minLength": 1},
+       "created_at": {"$ref": "#/$defs/UtcTime"},
+       "frozen_at": {"$ref": "#/$defs/UtcTime"}
+     }
+   },
+   "Intervention": {
+     "type": "object",
+     "additionalProperties": false,
+     "required": ["id", "revision", "zone_id", "zone_version_id", "reference_zone_id", "reference_zone_version_id", "evaluation_plan_id", "type", "lifecycle", "proposed_at", "timezone"],
+     "properties": {
+       "id": {"type": "string"},
+       "revision": {"type": "integer", "minimum": 1},
+       "zone_id": {"type": "string"},
+       "zone_version_id": {"type": "string", "minLength": 1},
+       "reference_zone_id": {"type": "string", "minLength": 1},
+       "reference_zone_version_id": {"type": "string", "minLength": 1},
+       "evaluation_plan_id": {"type": "string", "minLength": 1},
+       "type": {"enum": ["water_suppression", "road_sweeping", "traffic_restriction", "construction_pause"]},
+       "lifecycle": {"enum": ["draft", "approved", "action_started", "action_completed", "monitoring", "result_available", "cancelled"]},
+       "proposed_at": {"$ref": "#/$defs/UtcTime"},
+       "action_started_at": {"anyOf": [{"$ref": "#/$defs/UtcTime"}, {"type": "null"}]},
+       "action_completed_at": {"anyOf": [{"$ref": "#/$defs/UtcTime"}, {"type": "null"}]},
+       "marked_done_at": {"anyOf": [{"$ref": "#/$defs/UtcTime"}, {"type": "null"}]},
+       "timezone": {"type": "string", "minLength": 1},
+       "checkpoint_offsets_minutes": {
+         "type": "array",
+         "items": {"type": "integer", "minimum": 0},
+         "uniqueItems": true
+       },
+       "action_confirmation_basis": {"enum": ["officer_self_reported"]},
+       "scenario_id": {"type": ["string", "null"]}
+     }
+   },
+   "InterventionRevision": {
+     "type": "object",
+     "additionalProperties": false,
+     "required": ["id", "intervention_id", "revision", "reason", "corrected_fields", "corrected_at", "corrected_by_role", "superseded_evaluation_ids", "recompute_requested"],
+     "properties": {
+       "id": {"type": "string", "minLength": 1},
+       "intervention_id": {"type": "string", "minLength": 1},
+       "revision": {"type": "integer", "minimum": 2},
+       "reason": {"type": "string", "minLength": 1},
+       "corrected_fields": {"type": "array", "minItems": 1, "uniqueItems": true, "items": {"enum": ["action_started_at", "action_completed_at", "zone_version_id", "reference_zone_version_id", "evaluation_plan_id"]}},
+       "corrected_at": {"$ref": "#/$defs/UtcTime"},
+       "corrected_by_role": {"const": "SUPERVISOR"},
+       "superseded_evaluation_ids": {"type": "array", "uniqueItems": true, "items": {"type": "string"}},
+       "recompute_requested": {"const": true}
+     }
+   },
+   "ClockMetadata": {
+     "type": "object",
+     "additionalProperties": false,
+     "required": ["clock_mode", "effective_now", "clock_revision"],
+     "properties": {
+       "clock_mode": {"enum": ["REAL", "SCENARIO", "TEST"]},
+       "effective_now": {"$ref": "#/$defs/UtcTime"},
+       "scenario_id": {"type": ["string", "null"]},
+       "clock_revision": {"type": "integer", "minimum": 1}
+     }
+   },
+   "ActionOverlapAssessment": {
+     "type": "object",
+     "additionalProperties": false,
+     "required": ["id", "primary_intervention_id", "interfering_intervention_id", "overlap_policy_version", "overlap_start", "overlap_end", "overlapping_road_segment_ids", "affected_bin_starts", "reference_contaminated", "excluded_bin_count", "remaining_eligible_bin_count", "outcome", "reason_code"],
+     "properties": {
+       "id": {"type": "string", "minLength": 1},
+       "primary_intervention_id": {"type": "string", "minLength": 1},
+       "interfering_intervention_id": {"type": "string", "minLength": 1},
+       "overlap_policy_version": {"type": "string", "minLength": 1},
+       "overlap_start": {"$ref": "#/$defs/UtcTime"},
+       "overlap_end": {"$ref": "#/$defs/UtcTime"},
+       "overlapping_road_segment_ids": {"type": "array", "minItems": 1, "uniqueItems": true, "items": {"type": "string"}},
+       "affected_bin_starts": {"type": "array", "minItems": 1, "uniqueItems": true, "items": {"$ref": "#/$defs/UtcTime"}},
+       "reference_contaminated": {"type": "boolean"},
+       "excluded_bin_count": {"type": "integer", "minimum": 1},
+       "remaining_eligible_bin_count": {"type": "integer", "minimum": 0},
+       "outcome": {"enum": ["confounded", "inconclusive"]},
+       "reason_code": {"const": "MULTI_ACTION_CONTAMINATION"}
+     }
+   },
+   "EffectInterval": {
+     "type": "object",
+     "additionalProperties": false,
+     "required": ["low", "high", "level", "method"],
+     "properties": {
+       "low": {"type": "number"},
+       "high": {"type": "number"},
+       "level": {"const": 0.95},
+       "method": {"type": "string", "minLength": 1}
+     }
+   },
+   "ScenarioProjection": {
+     "type": "object",
+     "additionalProperties": false,
+     "required": ["id", "scenario_id", "intervention_id", "intervention_revision", "evaluation_plan_id", "checkpoint_offset_minutes", "metric", "status", "method_version", "generated_at", "limitations"],
+     "properties": {
+       "id": {"type": "string"},
+       "scenario_id": {"type": "string"},
+       "intervention_id": {"type": "string"},
+       "intervention_revision": {"type": "integer", "minimum": 1},
+       "evaluation_plan_id": {"type": "string", "minLength": 1},
+       "checkpoint_offset_minutes": {"type": "integer", "minimum": 0},
+       "metric": {"enum": ["PM2_5_MASS", "PM10_MASS"]},
+       "status": {"enum": ["pending", "simulated_improvement", "simulated_no_measurable_improvement", "confounded_scenario", "insufficient_scenario_data"]},
+       "action_pre_ug_m3": {"type": ["number", "null"], "minimum": 0},
+       "action_post_ug_m3": {"type": ["number", "null"], "minimum": 0},
+       "reference_pre_ug_m3": {"type": ["number", "null"], "minimum": 0},
+       "reference_post_ug_m3": {"type": ["number", "null"], "minimum": 0},
+       "effect_ug_m3": {"type": ["number", "null"]},
+       "effect_interval": {"anyOf": [{"$ref": "#/$defs/EffectInterval"}, {"type": "null"}]},
+       "method_version": {"type": "string"},
+       "generated_at": {"$ref": "#/$defs/UtcTime"},
+       "confounders": {"type": "array", "items": {"type": "string"}, "uniqueItems": true},
+       "limitations": {"type": "array", "items": {"type": "string"}}
+     }
+   },
+   "ObservedEvaluation": {
+     "type": "object",
+     "additionalProperties": false,
+     "required": ["id", "intervention_id", "intervention_revision", "evaluation_plan_id", "metric", "status", "method_version", "input_cutoff_at", "coverage", "confounders", "limitations", "checkpoint_offset_minutes", "evidence_state"],
+     "properties": {
+       "id": {"type": "string"},
+       "intervention_id": {"type": "string"},
+       "intervention_revision": {"type": "integer", "minimum": 1},
+       "evaluation_plan_id": {"type": "string", "minLength": 1},
+       "metric": {"enum": ["PM2_5_MASS", "PM10_MASS"]},
+       "checkpoint_offset_minutes": {"type": "integer", "minimum": 0},
+       "evidence_state": {"$ref": "#/$defs/EvidenceState"},
+       "status": {"enum": ["pending", "observed_improvement_association", "no_measurable_change", "confounded", "inconclusive"]},
+       "action_pre_ug_m3": {"type": ["number", "null"], "minimum": 0},
+       "action_post_ug_m3": {"type": ["number", "null"], "minimum": 0},
+       "reference_pre_ug_m3": {"type": ["number", "null"], "minimum": 0},
+       "reference_post_ug_m3": {"type": ["number", "null"], "minimum": 0},
+       "effect_ug_m3": {"type": ["number", "null"]},
+       "effect_interval": {"anyOf": [{"$ref": "#/$defs/EffectInterval"}, {"type": "null"}]},
+       "coverage": {"$ref": "#/$defs/Coverage"},
+       "method_version": {"type": "string"},
+       "input_cutoff_at": {"$ref": "#/$defs/UtcTime"},
+       "computed_at": {"anyOf": [{"$ref": "#/$defs/UtcTime"}, {"type": "null"}]},
+       "confounders": {"type": "array", "items": {"type": "string"}, "uniqueItems": true},
+       "limitations": {"type": "array", "items": {"type": "string"}}
+     }
+   },
+   "AqiDerivation": {
+     "type": "object",
+     "additionalProperties": false,
+     "required": ["id", "kind", "value", "aqi_standard", "aqi_algorithm_version", "averaging_window", "data_sufficiency_status", "input_measurement_ids", "event_time", "processed_at", "evidence_state"],
+     "properties": {
+       "id": {"type": "string"},
+       "kind": {"enum": ["pollutant_subindex", "estimated_local_aqi", "pm_based_air_quality_indicator", "regulatory_cpcb_aqi"]},
+       "pollutant": {"enum": ["PM2_5_MASS", "PM10_MASS", "NO2", "SO2", "CO", "O3"]},
+       "value": {"type": "number", "minimum": 0},
+       "aqi_standard": {"type": "string", "minLength": 1},
+       "aqi_algorithm_version": {"type": "string", "minLength": 1},
+       "averaging_window": {"type": "string", "minLength": 1},
+       "data_sufficiency_status": {"enum": ["sufficient", "insufficient_pollutants", "insufficient_temporal_coverage", "invalid_inputs"]},
+       "input_measurement_ids": {"type": "array", "minItems": 1, "items": {"type": "string"}, "uniqueItems": true},
+       "event_time": {"$ref": "#/$defs/UtcTime"},
+       "processed_at": {"$ref": "#/$defs/UtcTime"},
+       "evidence_state": {"$ref": "#/$defs/EvidenceState"}
+     }
+   },
+   "CameraEvent": {
+     "type": "object",
+     "additionalProperties": false,
+     "required": ["id", "hotspot_id", "camera_source", "media_type", "detection_method", "label", "recorded_at", "scenario_event_at", "position", "evidence_access", "media_object_id", "illustrative_only", "provenance"],
+     "properties": {
+       "id": {"type": "string", "minLength": 1},
+       "hotspot_id": {"type": "string", "minLength": 1},
+       "camera_source": {"enum": ["fleet", "officer", "public_submission", "curated_demo"]},
+       "media_type": {"enum": ["image", "video"]},
+       "detection_method": {"enum": ["manually_curated", "officer_attached", "user_attached"]},
+       "label": {"type": "string", "minLength": 1},
+       "recorded_at": {"$ref": "#/$defs/UtcTime"},
+       "scenario_event_at": {"$ref": "#/$defs/UtcTime"},
+       "position": {"$ref": "#/$defs/GeoPoint"},
+       "evidence_access": {"enum": ["restricted_media", "public_thumbnail", "metadata_only"]},
+       "media_object_id": {"type": "string", "minLength": 1},
+       "illustrative_only": {"const": true},
+       "provenance": {"$ref": "#/$defs/Provenance"}
+     }
+   },
+   "PublicInterventionResponse": {
+     "type": "object",
+     "additionalProperties": false,
+     "required": ["schema_version", "clock", "intervention", "evaluation_plan", "zone_versions", "scenario_projections", "observed_evaluations", "context_measurement_ids", "correction_notice", "disclaimer"],
+     "properties": {
+       "schema_version": {"const": "0.8"},
+       "clock": {"$ref": "#/$defs/ClockMetadata"},
+       "intervention": {"$ref": "#/$defs/Intervention"},
+       "evaluation_plan": {"$ref": "#/$defs/EvaluationPlan"},
+       "zone_versions": {"type": "array", "minItems": 2, "items": {"$ref": "#/$defs/ZoneVersion"}},
+       "scenario_projections": {"type": "array", "items": {"$ref": "#/$defs/ScenarioProjection"}},
+       "observed_evaluations": {"type": "array", "items": {"$ref": "#/$defs/ObservedEvaluation"}},
+       "context_measurement_ids": {"type": "array", "items": {"type": "string"}, "uniqueItems": true},
+       "correction_notice": {"type": ["string", "null"]},
+       "disclaimer": {"type": "string", "minLength": 1}
+     }
+   },
+   "NearbySummary": {
+     "type": "object",
+     "additionalProperties": false,
+     "required": ["requested_position", "nearest_road_observation", "nearest_station", "regional_model", "nearby_cities"],
+     "properties": {
+       "requested_position": {"$ref": "#/$defs/GeoPoint"},
+       "nearest_road_observation": {"anyOf": [{"$ref": "#/$defs/Measurement"}, {"type": "null"}]},
+       "nearest_station": {"anyOf": [{"$ref": "#/$defs/Measurement"}, {"type": "null"}]},
+       "regional_model": {"anyOf": [{"$ref": "#/$defs/Measurement"}, {"type": "null"}]},
+       "nearby_cities": {"type": "array", "items": {"$ref": "#/$defs/MapAggregate"}}
+     }
+   }
+ }
+}
+
+
+

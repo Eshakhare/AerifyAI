@@ -1,0 +1,25 @@
+{
+ "id": "overlap_assessment_demo_01",
+ "primary_intervention_id": "int_water_overlap_01",
+ "interfering_intervention_id": "int_road_sweep_overlap_02",
+ "overlap_policy_version": "action_overlap_v1",
+ "overlap_start": "2026-10-18T10:30:00Z",
+ "overlap_end": "2026-10-18T12:00:00Z",
+ "overlapping_road_segment_ids": [
+   "seg_delhi_osm_250m_v1_demo_041",
+   "seg_delhi_osm_250m_v1_demo_042"
+ ],
+ "affected_bin_starts": [
+   "2026-10-18T10:30:00Z",
+   "2026-10-18T10:45:00Z",
+   "2026-10-18T11:00:00Z"
+ ],
+ "reference_contaminated": true,
+ "excluded_bin_count": 3,
+ "remaining_eligible_bin_count": 2,
+ "outcome": "inconclusive",
+ "reason_code": "MULTI_ACTION_CONTAMINATION"
+}
+
+
+

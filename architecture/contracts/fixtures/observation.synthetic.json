@@ -1,0 +1,42 @@
+{
+ "id": "obs_effect_001_pm10",
+ "metric": "PM10_MASS",
+ "value": 181.5,
+ "unit": "ug/m3",
+ "event_time": "2026-10-08T09:55:00Z",
+ "processed_at": "2026-10-08T09:55:02Z",
+ "generated_at": "2026-10-08T09:40:00Z",
+ "device_id": "virtual_bus_01",
+ "raw_record_id": null,
+ "calibration_version": null,
+ "road_network_version": "geofabrik_northern_zone_2026_10_10",
+ "segmentation_version": "delhi_osm_250m_v1",
+ "matching_method_version": "osrm_match_v1",
+ "map_match_confidence": 0.94,
+ "snapped_distance_m": 6.4,
+ "original_position": {"lat": 28.64686, "lng": 77.31594},
+ "evidence_state": "SYNTHETIC",
+ "spatial_support": {
+   "kind": "road_segment",
+   "support_id": "road_segment_anand_vihar_014",
+   "position": {"lat": 28.6469, "lng": 77.3160},
+   "geometry_ref": "road_segment_anand_vihar_014",
+   "nominal_resolution_m": 200,
+   "radius_m": null
+ },
+ "quality_flags": ["synthetic_only"],
+ "provenance": {
+   "origin": "synthetic_scenario",
+   "dataset_id": "aerify_demo_30d_v1",
+   "source_id": "generator_virtual_bus_01",
+   "provider": "Aerify scenario engine",
+   "license_id": null,
+   "method_version": "mobile_minute_generation_v1",
+   "scenario_id": "water_suppression_sustained_01",
+   "generator_version": "0.5.0",
+   "anchor_record_ids": ["iitd_anchor_pm10_202011_001"]
+ }
+}
+
+
+
