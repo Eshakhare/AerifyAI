@@ -1,7 +1,7 @@
 # Aerify AI: workstream prompts with one contract
 
 
-Use the shared instruction at the start of every AI Studio or Antigravity task. All workstreams use the same accepted decisions and `contracts/domain.schema.json` version.
+**Revision:** 0.9 | Use the shared instruction at the start of every AI Studio or Antigravity task. All workstreams use the same accepted decisions and `contracts/domain.schema.json` version (`0.9`).
 
 
 The build is organized as four workstreams — frontend, data/geography, analysis/workflow, contract/platform — with a task execution order and gates in `docs/architecture.md` ("Task execution order"). These prompts are task-based, not person-based: anyone may execute a prompt from any workstream; the workstream only describes the tasks, not who does them. Do not make independent scope cuts between the demo core and optional extensions; quality, provenance, auditability and CI gates are never traded for time.
@@ -46,14 +46,15 @@ Build the React + TypeScript + Vite UI against generated OpenAPI types and a Fix
 1. Delhi district overview using current official district polygons.
 2. Metric selector for PM2.5, PM10 and official AQI; optional context layers remain separate.
 3. District selection -> 2–3 km cells -> measured roads/areas.
-4. Colour legend, accessible text categories, coverage/freshness/source badges and no-data state.
+4. Colour legend rendered from the bands returned by `GET /v1/public/legends` (never hard-coded thresholds), text categories from `MapAggregate.category`/`legend_id`, coverage/freshness/source badges and no-data state.
 5. Permission-based Near You card with distinct nearest road observation, station AQI, regional fallback and nearby-city AQI.
-6. Context drawer for weather, satellite and nearby possible sources with native resolution/time.
-7. Scenario pages labelled Synthetic demonstration with lineage and projected result.
+6. Context drawer for weather, satellite and nearby possible sources rendered from `LocationContext` (`ContextDescriptor`: provider, product, `resolution_label`, satellite footprint, QA/cloud, valid time).
+7. Scenario pages labelled Synthetic demonstration with lineage and projected result; the scenario explorer lists the 12 catalog cases from `GET /v1/public/scenarios`.
 8. Separate future observed-evaluation page with qualified association wording.
 9. Officer action flow for water suppression and Mark Done; video is contextual media only.
-10. Completion/+1/+3/+6/+12 h action timeline with reference comparison and evidence state.
-11. Zone catalog/geometry selector, draft/start/complete states, restricted media metadata and supervisor correction notice.
+10. Completion/+1/+3/+6/+12 h action timeline with reference comparison, evidence state and structured `ConfounderFinding` cards (render `display_text`, style by `code`/`state`).
+11. Zone catalog (`ZoneSummary`: anchor state, server-computed label, placeholder-geometry badge)/geometry selector, draft/start/complete states, restricted media metadata and supervisor correction notice.
+12. Role-aware shell driven by `GET /v1/me` (`SessionInfo.capabilities` gate UX only; the server enforces). In `FixtureApi` mode only, a demo role switcher serves fixture `SessionInfo` (`auth_mode = FIXTURE`); in `HttpApi` mode sign in to seeded Firebase demo accounts (sign-in only) and never send a client-chosen role; the role always comes from `GET /v1/me`.
 
 
 Do not calculate data values or result status in React. Do not use the removed Google Maps HeatmapLayer; use district polygons and deck.gl/custom grid or hex overlays. Run schema fixture validation, frontend build and browser flows for observed, modeled, synthetic, stale and no-data states.
@@ -69,8 +70,8 @@ Implement source adapters and the deterministic scenario engine.
 
 - Import IIT Delhi PM1/PM2.5/PM10/GPS/time without changing its historical identity.
 - Add candidate CPCB/DPCC station import with license and access notes.
-- Add weather adapter for temperature, RH, precipitation, wind speed/direction; persist grid/resolution/model.
-- Add selected Sentinel-5P/CAMS contextual adapter with footprint, acquisition time and quality flags.
+- Add weather adapter for temperature, RH, precipitation, wind speed/direction; persist each value as a `Measurement` with `ContextDescriptor` (grid ID, nominal resolution, product/version, valid interval).
+- Add selected Sentinel-5P/CAMS contextual adapter with footprint polygon, acquisition interval, `qa_value`/`cloud_fraction` and column units (`mol/m2`, `index`).
 - Add a licensed facility/industrial-land registry and 1 km/3 km spatial queries.
 - Load official Delhi districts, analysis cells and road geometry into PostGIS.
 - Build map aggregation with configurable freshness and coverage gates.
@@ -78,10 +79,10 @@ Implement source adapters and the deterministic scenario engine.
 - Import the pinned Geofabrik Northern Zone OSM snapshot, clip Delhi, run OSRM Match as a version-pinned Cloud Run job/service (not a required local container) and build `delhi_osm_250m_v1`; reject low-confidence/distant matches and preserve unmatched points.
 
 
-The generator selects observed PM anchors, joins time-compatible context, generates missing action/reference local series, reproduces missingness/noise and creates paired WITHOUT_ACTION/WITH_ACTION water-suppression timelines. Produce the accepted 30-day, 4–6-bus, 6–8-route profile and 12 action cases, with corridors from the joint route/action-zone plan and `route_version_ids` in every run's lineage. Store seed, generator version, config hash, anchors, context IDs, route versions, generated metrics and assumptions. Enforce PM1 <= PM2.5 <= PM10 for generated mass records. Generate PM0.3/CO2/HCHO/TVOC only if a separate documented model is configured; otherwise leave absent. Test reproducibility, units, time alignment, provenance and aggregation coverage.
+The generator selects observed PM anchors, joins time-compatible context, generates missing action/reference local series, reproduces missingness/noise and creates paired WITHOUT_ACTION/WITH_ACTION water-suppression timelines. Produce the accepted 30-day, 4–6-bus, 6–8-route profile and the 12 cases of `data/scenarios/scenario-catalog.v1.json` (record `catalog_version`, `case_id`, `design_intent`), with corridors from the joint route/action-zone plan and `route_version_ids` in every run's lineage. Store seed, generator version, config hash, anchors, context IDs, route versions, generated metrics and assumptions. Enforce PM1 <= PM2.5 <= PM10 for generated mass records. Generate PM0.3/CO2/HCHO/TVOC only if a separate documented model is configured; otherwise leave absent. Test reproducibility, units, time alignment, provenance and aggregation coverage.
 
 
-One of the three confounded/inconclusive cases must contain spatiotemporally overlapping actions and contaminated reference bins.
+One of the three confounded/inconclusive cases (S12) must contain spatiotemporally overlapping actions and contaminated reference bins, using the catalog's non-evaluated auxiliary `road_sweeping` action.
 ```
 
 
@@ -98,7 +99,7 @@ Store action_started_at, action_completed_at, marked_done_at and timezone. Ancho
 Create and freeze the evaluation plan before action start. Implement `water_suppression_demo_policy_v1` exactly: coverage/bin gates, rain/wind/traffic triggers and action-overlap contamination. Do not fit weather-adjusted coefficients for the demo. Implement server-owned REAL/SCENARIO/TEST time for API, scheduler, freshness and cache namespaces. Implement supervisor corrections as new revisions that supersede and recompute affected results.
 
 
-Keep AQI, video and satellite context out of the short-window PM effect calculation. Store pollutant-specific samples, independent bins, source counts, interval, threshold/method version, confounders and limitations. Implement bounded Gemini/ADK explanations through validated read-only tools for hotspot evidence, weather, satellite, possible sources, scenario lineage and computed results. Reject unsupported causal/factory claims and any numeric output inconsistent with tools. Provide deterministic fallback text. Test both pollutants, sparse data, rain/wind confounding, invalid reference, idempotency and result versioning.
+Keep AQI, video and satellite context out of the short-window PM effect calculation. Store pollutant-specific samples, independent bins, source counts, interval, threshold/method version, structured `ConfounderFinding` records (DISCLOSED vs TRIGGERED; the schema enforces status consistency) and limitations. Implement bounded Gemini/ADK explanations on Vertex AI with ADC (no API key), pinned to `gemini-2.5-flash-lite` with an application-level daily call/token cap, through validated read-only tools for hotspot evidence, weather, satellite, possible sources, scenario lineage and computed results. Reject unsupported causal/factory claims and any numeric output inconsistent with tools. Provide deterministic fallback text. Test both pollutants, sparse data, rain/wind confounding, invalid reference, idempotency and result versioning.
 ```
 
 
@@ -106,7 +107,7 @@ Keep AQI, video and satellite context out of the short-window PM effect calculat
 
 
 ```text
-Own the single contract and deployed integration. Keep FastAPI as the only operational API, Google Cloud SQL for PostgreSQL with PostGIS as the only operational database, immutable raw payloads in Cloud Storage, Firebase Auth for officers, Cloud Tasks -> private Cloud Run worker, Secret Manager for third-party keys and workload identity for Google Cloud. Do not create a Docker/local PostgreSQL database.
+Own the single contract and deployed integration. Keep FastAPI as the only operational API, Google Cloud SQL for PostgreSQL with PostGIS as the only operational database, immutable raw payloads in Cloud Storage, Firebase Auth for officers, Cloud Tasks -> private Cloud Run worker, Secret Manager for non-Google provider keys only and workload identity/ADC for every Google Cloud service, including Gemini on Vertex AI (no Gemini API key). Do not create a Docker/local PostgreSQL database.
 
 
 Treat BigQuery as an optional asynchronous analytical/AI mirror. If enabled, partition by event date, cluster by source/device/geography and use SQL-native AI only for batch, reviewable enrichment of compact derived rows. Persist model/prompt/version/status metadata. Never put BigQuery LLM calls on the synchronous public API path or use their output to calculate AQI, concentrations, action effects or evidence state.
@@ -115,7 +116,7 @@ Treat BigQuery as an optional asynchronous analytical/AI mirror. If enabled, par
 Define immutable zone/version, route/version, evaluation-plan, intervention-revision and clock DTOs plus all public/officer/supervisor endpoints. Provision isolated `aerify_dev`, `aerify_ci` and `aerify_demo` databases/roles on the hackathon Cloud SQL instance. Use Cloud SQL Python Connector/IAM authentication for developer and CI access and Cloud Run's Cloud SQL integration in deployment; do not use static database credentials or expose PostgreSQL broadly on a public IP. Alembic owns migrations and deterministic seeds. Each CI run migrates/seeds a unique empty schema and removes it afterward. Required CI validates fixtures, migrations, backend tests, OpenAPI generation, zero-diff TypeScript generation, frontend tests/build, Playwright role/evidence/correction flows, containers and secrets. Protect the integration branch and require contract-steward review for contracts/migrations/generated clients.
 
 
-Freeze schema only after remaining geometry/source/gate decisions. Generate Pydantic/OpenAPI and TypeScript types from the accepted contract. Add endpoints for city overview, district cells, cell roads, Nearby, contextual layers, scenarios and interventions. Cache provider responses by valid time/grid and enforce source rate limits. Redact officer identity, plates and restricted media from public responses.
+Freeze schema only after remaining geometry/source/gate decisions. Generate Pydantic/OpenAPI and TypeScript types from the accepted contract. Add endpoints for city overview, district cells, cell roads, Nearby, contextual layers (`LocationContext`), scenarios list/detail, legends, the `ZoneSummary` zone catalog, `GET /v1/me` and interventions. Verify Firebase ID tokens for identity only and resolve roles from the Cloud SQL `app_users` table, never from token claims or client input. Cache provider responses by valid time/grid and enforce source rate limits. Redact officer identity, plates and restricted media from public responses.
 
 
 Integration acceptance: district-to-road map; no-data/freshness states; Near You fallback; synthetic lineage; separate scenario/observed result wording; weather/satellite resolution display; 1 km/3 km possible-source context without causation; officer Mark Done; unauthorized denial; reproducible offline fixture demo. Run JSON Schema validation, OpenAPI/client drift check, backend tests, frontend build and full browser path.

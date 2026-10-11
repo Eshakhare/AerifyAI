@@ -1,7 +1,7 @@
 # Aerify AI: data and schema decisions
 
 
-**Updated 10 October 2026.** Reviewer gaps B1–B8 are now decision-locked for the demo. The build is planned as scope tiers (demo core vs optional extensions) and a task execution order in `docs/architecture.md`, not as a person-based schedule; any team member may execute any task. Scope may compress, but evidence integrity, auditability, contract validation and automated testing are never traded for time. Exact Anand Vihar polygons and production-grade observed-effect thresholds still require domain approval, but deterministic demo policies and fixtures are fixed below.
+**Revision:** 0.9 | **Updated 11 October 2026.** Reviewer gaps B1–B8 are decision-locked for the demo, and the UI-driven and stack gaps are closed by D26–D33. The build is planned as scope tiers (demo core vs optional extensions) and a task execution order in `docs/architecture.md`, not as a person-based schedule; any team member may execute any task. Scope may compress, but evidence integrity, auditability, contract validation and automated testing are never traded for time. Exact Anand Vihar polygons and production-grade observed-effect thresholds still require domain approval, but deterministic demo policies and fixtures are fixed below.
 
 
 ## Reviewer recommendation disposition
@@ -70,6 +70,14 @@
 | D23 — clock | Server-owned real/scenario/test clock is authoritative across services and caches. | Accepted. |
 | D24 — delivery gate | The demo build retains contract drift, migration, test and staging gates; optional integrations are the only deferrals. | Accepted. |
 | D25 — managed database | Do not provision local PostgreSQL/PostGIS or Docker Compose. Use one small non-HA Cloud SQL instance for the hackathon with isolated dev/CI/demo databases and least-privilege roles; use a separate instance before production. Connect with IAM and the Cloud SQL connector/integration, never a repository password or unrestricted public database endpoint. | Accepted. |
+| D26 — context records (G1) | Weather, regional air-quality model and satellite records are `Measurement` rows with the existing metrics plus `AEROSOL_INDEX`. A `modeled_context` row must carry a `ContextDescriptor` (product, version, basis, temporal aggregation, resolution label, satellite footprint, `qa_value`, `cloud_fraction`) and `MODEL_ESTIMATED`; `nominal_resolution_m` is mandatory for grid cells and footprints; satellite columns use `mol/m2` or `index`, never `ug/m3`. `GET .../context` returns `LocationContext`. | Accepted. |
+| D27 — confounders (G2) | `confounders` are structured `ConfounderFinding` records (code, DISCLOSED/TRIGGERED, forced outcome, observed value, threshold, unit, policy version, server `display_text`), not strings. The UI renders `display_text`; the schema enforces status/finding consistency. `limitations` stay plain strings. | Accepted; breaking change in schema 0.9. |
+| D28 — scenario catalog (G3) | The 12 cases are fixed in `data/scenarios/scenario-catalog.v1.json`: all evaluated `water_suppression`, mix 3 sustained / 3 temporary / 3 no-effect / 3 confounded (rain, wind, overlap). S12 uses one non-evaluated auxiliary `road_sweeping` action. S01 is the flagship slot. `ScenarioRun` carries `catalog_version`, `case_id`, `design_intent` and zone/plan/route lineage. | Accepted; zone binding pending Gate 1. |
+| D29 — roles and auth (G4) | Roles `PUBLIC`/`OFFICER`/`SUPERVISOR` are stored only in the Cloud SQL `app_users` table, keyed by the Firebase `uid` from a verified ID token (Firebase Auth is sign-in only; no custom claims), and never come from clients or public DTOs. `GET /v1/me` returns `SessionInfo` with capabilities for UI gating; FastAPI enforces. The demo uses seeded Firebase accounts; the role switcher exists only in the UI's `FixtureApi` mode. | Accepted. |
+| D30 — legends (G5) | The server computes `category` (a `BandId`) from a versioned legend and the API returns the bands (`GET /v1/public/legends`, `legend_id` on aggregates). The UI owns palette only, no thresholds. Sets: `cpcb_pm25_conc_v1`, `cpcb_pm10_conc_v1` (concentration bands, not an AQI) and `cpcb_aqi_v1` (official station AQI). | Accepted; band values pending CPCB document check. |
+| D31 — zones and Palam–Dwarka (G6) | `ZoneSummary` exposes the computed anchor state (`ANCHORED`, `NO_VERIFIED_ANCHORS`, `UNVERIFIED`), label, fallback-wording flag, geometry status and flagship status. Before Gate 1 every zone is `UNVERIFIED` and fails closed to fully-synthetic wording. Palam–Dwarka (S01) has a placeholder fixture (`zone-version.palam-dwarka.placeholder.json`, coarse and unsurveyed); placeholder geometry is never loaded into Cloud SQL, and Gate 1 creates the real v1. | Accepted; real geometry pending Gate 1. |
+| D32 — geometry hash | `geometry_hash` is `sha256:` plus the SHA-256 of the compact JSON (no whitespace, keys in the order `type`, `coordinates`, UTF-8) of `geometry.data`. `validate_contracts.py` recomputes it for every fixture. | Accepted. |
+| D33 — Gemini access & cost cap | Gemini is called through Vertex AI with Application Default Credentials and the Cloud Run service account (`roles/aiplatform.user`); no Gemini API key exists. Pin the model to **Gemini 2.5 Flash-Lite (`gemini-2.5-flash-lite`)** (with config-only fallback to `gemini-3.5-flash-lite` if a new GCP project has restricted `2.5` access) and enforce three pay-as-you-go caps: a Cloud Billing enforced spend cap on Vertex AI, Vertex AI API quota limits, and a backend daily call/token allowance that falls back to deterministic summaries. | Accepted. |
 
 
 ## Critical interpretation rules
@@ -85,6 +93,9 @@
 8. **Evidence state is not effect evidence.** `DIRECTLY_OBSERVED` means the displayed concentration was directly measured; it does not prove that an action or nearby source caused it.
 9. **One pass is not a stable hotspot.** Persistent-road labels require configurable repeat counts and temporal diversity.
 10. **Time has two axes.** `event_time` drives environmental alignment and evaluation; `processed_at` drives ingestion and audit.
+11. **Modeled context fails closed.** A modeled record without its descriptor, resolution or `MODEL_ESTIMATED` state is invalid, and satellite column densities are never shown as surface concentrations.
+12. **Category and legend share one source.** Colours come from the server's band; the UI never recomputes a category.
+13. **Placeholders never become data.** Pre-Gate-1 zone geometry exists only in fixtures and is labelled `PLACEHOLDER`.
 
 
 ## Source matrix
@@ -117,6 +128,7 @@ A scenario run must contain:
 - context source IDs and their time/spatial compatibility;
 - a list of generated metrics;
 - generator version, configuration hash and seed;
+- `catalog_version`, `case_id` and `design_intent` from the accepted scenario catalog;
 - immutable action/reference zone-version IDs and frozen evaluation-plan ID;
 - route version IDs used by the run, split by purpose;
 - assumptions for water-suppression effect, traffic, weather and missingness;
@@ -127,7 +139,7 @@ A scenario run must contain:
 Default profile: 30 days; 4–6 virtual buses; 6–8 routes; approximately 16 operating hours/day; hourly cell background/weather; optional 15-minute traffic context; and 12 action cases split evenly among sustained, temporary, no-effect and inconclusive/confounded outcomes.
 
 
-Exactly one inconclusive/confounded case contains overlapping action influence windows so the contamination evaluator is covered.
+Exactly one inconclusive/confounded case contains overlapping action influence windows so the contamination evaluator is covered. The 12 cases are the evaluated water-suppression cases in `data/scenarios/scenario-catalog.v1.json`; the overlap case uses one non-evaluated auxiliary `road_sweeping` action as its interfering action.
 
 
 A zone-level wording guard applies everywhere synthetic values are shown: the display label is computed from the zone's verified anchor state — **Synthetic demo — based on historical PM observations and contextual models** with anchors, **Fully synthetic demonstration — no verified observed anchors in this zone** without — and Near You fallback wording never claims observation grade for a zone without verified anchors.
@@ -145,8 +157,9 @@ PM10 must be greater than or equal to PM2.5 for coherent synthetic mass observat
 - Administrative layer: current official Delhi district boundaries.
 - Analysis layer: stable H3/hex or square cells with an initial 2–3 km target width.
 - Detail layer: road segments that actually contain eligible observations.
-- Each aggregate returns metric, unit, category, value time/window, last observation time, source count, sample count, coverage state and provenance mix.
+- Each aggregate returns metric, unit, category (a `BandId`) with its `legend_id`, value time/window, last observation time, source count, sample count, coverage state and provenance mix.
 - Coverage states: `current`, `stale`, `sparse`, `modeled_only`, `synthetic_only`, `no_data`.
+- Legends are server-owned: category and bands come from one versioned legend served by `GET /v1/public/legends` (D30).
 - A cell may be coloured from observed data only after a configurable sample/source gate. Other origins receive distinct patterns/badges.
 - “Street-level” is reserved for an eligible nearby street observation; otherwise identify the actual fallback.
 - Preserve raw source cadence. Use one-minute operational aggregates and 15/30/60-minute comparison windows.
@@ -172,7 +185,7 @@ Proposed observed calculation for pollutant P:
 `effect_P = (action_post_P - action_pre_P) - (reference_post_P - reference_pre_P)`
 
 
-For the synthetic demo, `water_suppression_demo_policy_v1` freezes thresholds before generation/evaluation: 75% minimum coverage, three independent 15-minute bins, rain ≥0.5 mm/h in at least two post bins, wind-speed change ≥2 m/s, wind-direction shift ≥45°, traffic-index divergence >0.20, and any qualifying action overlap. Production observed-effect thresholds and interval method remain pending environmental review. AQI, media and satellite context are not numerical water-suppression outcome inputs.
+For the synthetic demo, `water_suppression_demo_policy_v1` freezes thresholds before generation/evaluation: 75% minimum coverage, three independent 15-minute bins, rain ≥0.5 mm/h in at least two post bins, wind-speed change ≥2 m/s, wind-direction shift ≥45°, traffic-index divergence >0.20, and any qualifying action overlap. Production observed-effect thresholds and interval method remain pending environmental review. AQI, media and satellite context are not numerical water-suppression outcome inputs. Triggers and disclosures are emitted as structured `ConfounderFinding` records (D27).
 
 
 ## AQI derivation contract
@@ -232,6 +245,10 @@ This repository defines workstreams, tasks, gates and their execution order (`do
 - Minimum samples/sources for district, cell and road colouring.
 - Production PM2.5/PM10 effect thresholds, response window and interval method for observed evaluation; the synthetic demo policy is already frozen.
 - Whether optional CO2/HCHO/TVOC/PM0.3 have a defensible source/model in this build; otherwise omit their values.
+- Verify the legend band values in `data/legends/legend-bands.v1.json` against the CPCB document and flip `verification_status` to `verified`.
+- Bind catalog cases S01–S12 to real zones, and confirm the flagship slot, at Gate 1 (task 1.6); replace placeholder geometry and assign `district_id` from the verified boundaries snapshot.
+- Select the Firebase sign-in accounts and the seeded `app_users` rows (role, `firebase_uid`) for the demo officer and supervisor.
+- Confirm the weather and Sentinel-5P product/version strings used in `ContextDescriptor.product_id`.
 - Repeat-pass and temporal-diversity gates for declaring a stable road hotspot.
 - Exact CPCB algorithm/version and third pollutant source if a regulatory-style overall AQI is required.
 - Measured scale threshold that would trigger a BigQuery analytical replica.

@@ -32,7 +32,7 @@
    "provider": "Aerify scenario engine",
    "license_id": null,
    "method_version": "mobile_minute_generation_v1",
-   "scenario_id": "water_suppression_sustained_01",
+   "scenario_id": "water_suppression_sustained_02",
    "generator_version": "0.5.0",
    "anchor_record_ids": ["iitd_anchor_pm10_202011_001"]
  }

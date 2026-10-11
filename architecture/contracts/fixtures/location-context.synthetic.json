@@ -1,0 +1,364 @@
+{
+ "schema_version": "0.9",
+ "clock": {
+  "clock_mode": "SCENARIO",
+  "effective_now": "2026-10-08T13:02:00Z",
+  "scenario_id": "water_suppression_sustained_02",
+  "clock_revision": 1
+ },
+ "location_id": "road_segment_anand_vihar_014",
+ "requested_position": {
+  "lat": 28.6469,
+  "lng": 77.316
+ },
+ "weather": [
+  {
+   "id": "ctx_weather_action_0955",
+   "metric": "WIND_SPEED",
+   "value": 3.1,
+   "unit": "m/s",
+   "event_time": "2026-10-08T09:00:00Z",
+   "event_time_end": "2026-10-08T10:00:00Z",
+   "processed_at": "2026-10-08T10:05:00Z",
+   "generated_at": null,
+   "device_id": null,
+   "raw_record_id": "raw_openmeteo_20261008_0900",
+   "evidence_state": "MODEL_ESTIMATED",
+   "spatial_support": {
+    "kind": "grid_cell",
+    "support_id": "openmeteo_grid_28.65_77.30",
+    "position": {
+     "lat": 28.65,
+     "lng": 77.3
+    },
+    "geometry_ref": null,
+    "nominal_resolution_m": 11000,
+    "radius_m": null
+   },
+   "context": {
+    "context_kind": "weather_model",
+    "product_id": "open_meteo_historical_best_match",
+    "product_version": null,
+    "measurement_basis": "surface_meteorology",
+    "temporal_aggregation": "hourly_mean",
+    "resolution_label": "Model grid, about 0.1° (≈11 km)",
+    "footprint": null,
+    "qa_value": null,
+    "cloud_fraction": null
+   },
+   "quality_flags": [
+    "modeled_only"
+   ],
+   "provenance": {
+    "origin": "modeled_context",
+    "dataset_id": "aerify_demo_context_snapshot_v1",
+    "source_id": "open_meteo_weather_candidate",
+    "provider": "Open-Meteo",
+    "license_id": null,
+    "method_version": null,
+    "scenario_id": null,
+    "generator_version": null,
+    "anchor_record_ids": []
+   }
+  },
+  {
+   "id": "ctx_weather_wind_dir_0955",
+   "metric": "WIND_DIRECTION",
+   "value": 245,
+   "unit": "degrees",
+   "event_time": "2026-10-08T09:00:00Z",
+   "event_time_end": "2026-10-08T10:00:00Z",
+   "processed_at": "2026-10-08T10:05:00Z",
+   "generated_at": null,
+   "device_id": null,
+   "raw_record_id": "raw_openmeteo_20261008_0900",
+   "evidence_state": "MODEL_ESTIMATED",
+   "spatial_support": {
+    "kind": "grid_cell",
+    "support_id": "openmeteo_grid_28.65_77.30",
+    "position": {
+     "lat": 28.65,
+     "lng": 77.3
+    },
+    "geometry_ref": null,
+    "nominal_resolution_m": 11000,
+    "radius_m": null
+   },
+   "context": {
+    "context_kind": "weather_model",
+    "product_id": "open_meteo_historical_best_match",
+    "product_version": null,
+    "measurement_basis": "surface_meteorology",
+    "temporal_aggregation": "hourly_mean",
+    "resolution_label": "Model grid, about 0.1° (≈11 km)",
+    "footprint": null,
+    "qa_value": null,
+    "cloud_fraction": null
+   },
+   "quality_flags": [
+    "modeled_only"
+   ],
+   "provenance": {
+    "origin": "modeled_context",
+    "dataset_id": "aerify_demo_context_snapshot_v1",
+    "source_id": "open_meteo_weather_candidate",
+    "provider": "Open-Meteo",
+    "license_id": null,
+    "method_version": null,
+    "scenario_id": null,
+    "generator_version": null,
+    "anchor_record_ids": []
+   }
+  },
+  {
+   "id": "ctx_weather_temp_0955",
+   "metric": "TEMPERATURE",
+   "value": 28.4,
+   "unit": "degC",
+   "event_time": "2026-10-08T09:00:00Z",
+   "event_time_end": "2026-10-08T10:00:00Z",
+   "processed_at": "2026-10-08T10:05:00Z",
+   "generated_at": null,
+   "device_id": null,
+   "raw_record_id": "raw_openmeteo_20261008_0900",
+   "evidence_state": "MODEL_ESTIMATED",
+   "spatial_support": {
+    "kind": "grid_cell",
+    "support_id": "openmeteo_grid_28.65_77.30",
+    "position": {
+     "lat": 28.65,
+     "lng": 77.3
+    },
+    "geometry_ref": null,
+    "nominal_resolution_m": 11000,
+    "radius_m": null
+   },
+   "context": {
+    "context_kind": "weather_model",
+    "product_id": "open_meteo_historical_best_match",
+    "product_version": null,
+    "measurement_basis": "surface_meteorology",
+    "temporal_aggregation": "hourly_mean",
+    "resolution_label": "Model grid, about 0.1° (≈11 km)",
+    "footprint": null,
+    "qa_value": null,
+    "cloud_fraction": null
+   },
+   "quality_flags": [
+    "modeled_only"
+   ],
+   "provenance": {
+    "origin": "modeled_context",
+    "dataset_id": "aerify_demo_context_snapshot_v1",
+    "source_id": "open_meteo_weather_candidate",
+    "provider": "Open-Meteo",
+    "license_id": null,
+    "method_version": null,
+    "scenario_id": null,
+    "generator_version": null,
+    "anchor_record_ids": []
+   }
+  },
+  {
+   "id": "ctx_weather_rain_0955",
+   "metric": "PRECIPITATION_RATE",
+   "value": 0.0,
+   "unit": "mm/h",
+   "event_time": "2026-10-08T09:00:00Z",
+   "event_time_end": "2026-10-08T10:00:00Z",
+   "processed_at": "2026-10-08T10:05:00Z",
+   "generated_at": null,
+   "device_id": null,
+   "raw_record_id": "raw_openmeteo_20261008_0900",
+   "evidence_state": "MODEL_ESTIMATED",
+   "spatial_support": {
+    "kind": "grid_cell",
+    "support_id": "openmeteo_grid_28.65_77.30",
+    "position": {
+     "lat": 28.65,
+     "lng": 77.3
+    },
+    "geometry_ref": null,
+    "nominal_resolution_m": 11000,
+    "radius_m": null
+   },
+   "context": {
+    "context_kind": "weather_model",
+    "product_id": "open_meteo_historical_best_match",
+    "product_version": null,
+    "measurement_basis": "surface_meteorology",
+    "temporal_aggregation": "hourly_mean",
+    "resolution_label": "Model grid, about 0.1° (≈11 km)",
+    "footprint": null,
+    "qa_value": null,
+    "cloud_fraction": null
+   },
+   "quality_flags": [
+    "modeled_only"
+   ],
+   "provenance": {
+    "origin": "modeled_context",
+    "dataset_id": "aerify_demo_context_snapshot_v1",
+    "source_id": "open_meteo_weather_candidate",
+    "provider": "Open-Meteo",
+    "license_id": null,
+    "method_version": null,
+    "scenario_id": null,
+    "generator_version": null,
+    "anchor_record_ids": []
+   }
+  }
+ ],
+ "satellite": [
+  {
+   "id": "ctx_s5p_no2_0810",
+   "metric": "NO2",
+   "value": 0.00011,
+   "unit": "mol/m2",
+   "event_time": "2026-10-08T08:10:00Z",
+   "event_time_end": "2026-10-08T08:11:00Z",
+   "processed_at": "2026-10-08T12:30:00Z",
+   "generated_at": null,
+   "device_id": null,
+   "raw_record_id": "raw_s5p_no2_20261008_0810",
+   "evidence_state": "MODEL_ESTIMATED",
+   "spatial_support": {
+    "kind": "satellite_footprint",
+    "support_id": "s5p_pixel_example_0810",
+    "position": {
+     "lat": 28.645,
+     "lng": 77.3
+    },
+    "geometry_ref": null,
+    "nominal_resolution_m": 5500,
+    "radius_m": null
+   },
+   "context": {
+    "context_kind": "satellite_retrieval",
+    "product_id": "S5P_L2__NO2___",
+    "product_version": "example",
+    "measurement_basis": "column_density",
+    "temporal_aggregation": "overpass_snapshot",
+    "resolution_label": "Sentinel-5P pixel, about 5.5 × 3.5 km",
+    "footprint": {
+     "encoding": "geojson",
+     "data": {
+      "type": "Polygon",
+      "coordinates": [
+       [
+        [
+         77.27,
+         28.62
+        ],
+        [
+         77.33,
+         28.62
+        ],
+        [
+         77.33,
+         28.67
+        ],
+        [
+         77.27,
+         28.67
+        ],
+        [
+         77.27,
+         28.62
+        ]
+       ]
+      ]
+     }
+    },
+    "qa_value": 0.82,
+    "cloud_fraction": 0.18
+   },
+   "quality_flags": [
+    "modeled_only"
+   ],
+   "provenance": {
+    "origin": "modeled_context",
+    "dataset_id": "aerify_demo_context_snapshot_v1",
+    "source_id": "sentinel_5p_candidate",
+    "provider": "ESA Copernicus Sentinel-5P",
+    "license_id": null,
+    "method_version": null,
+    "scenario_id": null,
+    "generator_version": null,
+    "anchor_record_ids": []
+   }
+  }
+ ],
+ "air_quality_model": [
+  {
+   "id": "ctx_cams_pm25_0900",
+   "metric": "PM2_5_MASS",
+   "value": 78.0,
+   "unit": "ug/m3",
+   "event_time": "2026-10-08T09:00:00Z",
+   "event_time_end": "2026-10-08T10:00:00Z",
+   "processed_at": "2026-10-08T10:05:00Z",
+   "generated_at": null,
+   "device_id": null,
+   "raw_record_id": "raw_cams_20261008_0900",
+   "evidence_state": "MODEL_ESTIMATED",
+   "spatial_support": {
+    "kind": "grid_cell",
+    "support_id": "cams_grid_28.65_77.30",
+    "position": {
+     "lat": 28.65,
+     "lng": 77.3
+    },
+    "geometry_ref": null,
+    "nominal_resolution_m": 45000,
+    "radius_m": null
+   },
+   "context": {
+    "context_kind": "air_quality_model",
+    "product_id": "cams_global_forecast",
+    "product_version": null,
+    "measurement_basis": "surface_concentration",
+    "temporal_aggregation": "hourly_mean",
+    "resolution_label": "Regional model grid, about 0.4° (≈45 km)",
+    "footprint": null,
+    "qa_value": null,
+    "cloud_fraction": null
+   },
+   "quality_flags": [
+    "modeled_only"
+   ],
+   "provenance": {
+    "origin": "modeled_context",
+    "dataset_id": "aerify_demo_context_snapshot_v1",
+    "source_id": "cams_air_quality_model_candidate",
+    "provider": "Open-Meteo / CAMS",
+    "license_id": null,
+    "method_version": null,
+    "scenario_id": null,
+    "generator_version": null,
+    "anchor_record_ids": []
+   }
+  }
+ ],
+ "nearby_sources": [
+  {
+   "id": "src_ind_example_001",
+   "name": "Example industrial land parcel",
+   "source_type": "industrial_land_use",
+   "distance_m": 820,
+   "bearing_deg": 245,
+   "wind_alignment": "downwind",
+   "registry_source_id": "delhi_industrial_registry_candidate",
+   "satellite_measurement_ids": [
+    "ctx_s5p_no2_0810"
+   ],
+   "causation_claimed": false
+  }
+ ],
+ "source_radii_m": [
+  1000,
+  3000
+ ],
+ "resolution_notice": "Weather is regional model context at about 11 km; the satellite value is a column over a multi-km pixel; neither is a street measurement.",
+ "disclaimer": "Example fixture values for contract validation only; not real provider output. Proximity context only — does not establish emissions causality."
+}

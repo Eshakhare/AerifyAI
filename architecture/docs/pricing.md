@@ -1,7 +1,7 @@
 # Aerify AI: deployment pricing and budget notes
 
 
-Checked October 2026. Currency USD; this is a **planning estimate**, not a quote. Region, billing eligibility, machine sizes, token lengths, traffic and taxes determine the actual bill. Pricing is here rather than in the architecture or role prompts.
+**Revision:** 0.9 | Checked October 2026. Currency USD; this is a **planning estimate**, not a quote. Region, billing eligibility, machine sizes, token lengths, traffic and taxes determine the actual bill. Pricing is here rather than in the architecture or role prompts.
 
 
 ## Assumed demo
@@ -18,7 +18,7 @@ Checked October 2026. Currency USD; this is a **planning estimate**, not a quote
 | Cloud SQL | ~$12–40/month for a small single-zone instance plus modest storage/backup, subject to region/tier | Continuous instance uptime; larger/HA tier much more |
 | Cloud Run API + worker | ~$0–15/month at low traffic, depending on free-tier eligibility and region | Requests, CPU/memory runtime, network and logs |
 | Maps JavaScript API | Often $0 at demo traffic | Global 10,000 free Dynamic Maps loads monthly; eligible India-pricing accounts show 70,000 free India Dynamic Maps loads; other Maps SKUs differ |
-| Gemini 2.5 Flash on Vertex/Agent Platform | ~1.85at1,000or~18.50 at 10,000 example calls | Example: 2,000 input + 500 output/reasoning tokens per call; listed $0.30/1M input and $2.50/1M output tokens |
+| Gemini 2.5 Flash-Lite (`gemini-2.5-flash-lite`) on Vertex AI | ~$0.40 at 1,000 or ~$4.00 at 10,000 example calls | Pinned low-cost model. Example: 2,000 input + 500 output tokens per call; listed $0.10/1M input and $0.40/1M output tokens (note: if a new project lacks `2.5` access and uses `gemini-3.5-flash-lite`, rates are $0.30/1M input and $2.50/1M output, or ~$1.85 per 1,000 calls) |
 | Cloud Tasks, Firebase Hosting, Cloud Storage | Often $0–10/month for this small demo | Task volume, hosting transfer, media and storage |
 | Optional BigQuery analytics | Likely negligible query/storage spend at the 172,800-row demo scale, but verify against the current free tier and region | Bytes stored/scanned, scheduled-query frequency and retained analytical history |
 | Optional BigQuery AI functions | No fixed estimate; budget separately from ordinary SQL | BigQuery processing plus the remote Gemini/Agent Platform model calls and their tokens |
@@ -36,7 +36,7 @@ Enabling the BigQuery mirror should not replace Cloud SQL in this estimate. Expo
 Google AI Pro increases AI Studio and Antigravity build usage. Google's current India plan comparison lists **$10 monthly Google Cloud credits** for the Pro plan through the Google Developer Programme premium; confirm that your subscription/account actually activates those credits and that they apply to this Cloud billing account. Do not assume a subscription covers public app use, Maps, Cloud SQL or Vertex inference.
 
 
-Use a separate Aerify AI Cloud project for clean usage reporting. Set a project-wide alerts-only budget with several email thresholds. Google now documents **enforced spend cap budgets for eligible Gemini API/Vertex and Cloud Run**, one project and one service per spend cap; Cloud SQL and Maps are not in that currently documented eligibility list. Caps can take time to enforce and may incur some overage. Add explicit Maps API quotas, restrict API keys, impose a Gemini daily token/call allowance in backend code, and set Cloud Run max instances. Check charges daily during the hackathon; delete the Cloud SQL instance when the demo no longer needs it.
+Use a separate Aerify AI Cloud project for clean usage reporting. Set a project-wide alerts-only budget with several email thresholds. Google now documents **enforced spend cap budgets for eligible Gemini API/Vertex and Cloud Run**, one project and one service per spend cap; Cloud SQL and Maps are not in that currently documented eligibility list. Caps can take time to enforce and may incur some overage. Add explicit Maps API quotas, restrict API keys, lock the model configuration to `gemini-2.5-flash-lite` only, cap Vertex AI API quotas (requests/tokens per minute and day) in GCP console alongside the Vertex AI enforced spend-cap budget, impose a hard Gemini daily token/call allowance in backend code that falls back to deterministic summaries, and set Cloud Run max instances. Check charges daily during the hackathon; delete the Cloud SQL instance when the demo no longer needs it.
 
 
 ## Primary pricing references

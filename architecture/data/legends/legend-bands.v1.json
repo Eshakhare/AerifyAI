@@ -1,0 +1,67 @@
+{
+ "schema_version": "0.9",
+ "catalog_id": "legend_bands_v1",
+ "description": "Server-owned legend band sets. `MapAggregate.category` is the `id` of the band that contains the aggregate value under `boundary_rule`; the API serves these exact bands through `GET /v1/public/legends`, so the UI never hard-codes thresholds. Each entry validates against the `Legend` $def.",
+ "legends": [
+  {
+   "id": "cpcb_pm25_conc_v1",
+   "version": "1",
+   "metric": "PM2_5_MASS",
+   "unit": "ug/m3",
+   "kind": "concentration_band",
+   "boundary_rule": "upper_inclusive",
+   "reference_averaging_window": "24h",
+   "bands": [
+    {"id": "GOOD", "label": "Good", "severity_rank": 0, "lower_bound": 0, "upper_bound": 30},
+    {"id": "SATISFACTORY", "label": "Satisfactory", "severity_rank": 1, "lower_bound": 30, "upper_bound": 60},
+    {"id": "MODERATE", "label": "Moderate", "severity_rank": 2, "lower_bound": 60, "upper_bound": 90},
+    {"id": "POOR", "label": "Poor", "severity_rank": 3, "lower_bound": 90, "upper_bound": 120},
+    {"id": "VERY_POOR", "label": "Very poor", "severity_rank": 4, "lower_bound": 120, "upper_bound": 250},
+    {"id": "SEVERE", "label": "Severe", "severity_rank": 5, "lower_bound": 250, "upper_bound": null}
+   ],
+   "notice": "Colour bands apply CPCB breakpoint ranges to PM2.5 mass concentration for display only. This is not an AQI, and the aggregation window may be shorter than the 24-hour CPCB basis.",
+   "source_citation": "CPCB National AQI sub-index breakpoints, PM2.5 (https://airquality.cpcb.gov.in/ccr_docs/How_AQI_Calculated.pdf)",
+   "verification_status": "pending_source_check"
+  },
+  {
+   "id": "cpcb_pm10_conc_v1",
+   "version": "1",
+   "metric": "PM10_MASS",
+   "unit": "ug/m3",
+   "kind": "concentration_band",
+   "boundary_rule": "upper_inclusive",
+   "reference_averaging_window": "24h",
+   "bands": [
+    {"id": "GOOD", "label": "Good", "severity_rank": 0, "lower_bound": 0, "upper_bound": 50},
+    {"id": "SATISFACTORY", "label": "Satisfactory", "severity_rank": 1, "lower_bound": 50, "upper_bound": 100},
+    {"id": "MODERATE", "label": "Moderate", "severity_rank": 2, "lower_bound": 100, "upper_bound": 250},
+    {"id": "POOR", "label": "Poor", "severity_rank": 3, "lower_bound": 250, "upper_bound": 350},
+    {"id": "VERY_POOR", "label": "Very poor", "severity_rank": 4, "lower_bound": 350, "upper_bound": 430},
+    {"id": "SEVERE", "label": "Severe", "severity_rank": 5, "lower_bound": 430, "upper_bound": null}
+   ],
+   "notice": "Colour bands apply CPCB breakpoint ranges to PM10 mass concentration for display only. This is not an AQI, and the aggregation window may be shorter than the 24-hour CPCB basis.",
+   "source_citation": "CPCB National AQI sub-index breakpoints, PM10 (https://airquality.cpcb.gov.in/ccr_docs/How_AQI_Calculated.pdf)",
+   "verification_status": "pending_source_check"
+  },
+  {
+   "id": "cpcb_aqi_v1",
+   "version": "1",
+   "metric": "INDIAN_AQI",
+   "unit": "aqi",
+   "kind": "official_aqi",
+   "boundary_rule": "upper_inclusive",
+   "reference_averaging_window": "24h",
+   "bands": [
+    {"id": "GOOD", "label": "Good", "severity_rank": 0, "lower_bound": 0, "upper_bound": 50},
+    {"id": "SATISFACTORY", "label": "Satisfactory", "severity_rank": 1, "lower_bound": 50, "upper_bound": 100},
+    {"id": "MODERATE", "label": "Moderate", "severity_rank": 2, "lower_bound": 100, "upper_bound": 200},
+    {"id": "POOR", "label": "Poor", "severity_rank": 3, "lower_bound": 200, "upper_bound": 300},
+    {"id": "VERY_POOR", "label": "Very poor", "severity_rank": 4, "lower_bound": 300, "upper_bound": 400},
+    {"id": "SEVERE", "label": "Severe", "severity_rank": 5, "lower_bound": 400, "upper_bound": null}
+   ],
+   "notice": "Official station AQI category as received from the source. It is a station or city value, not a street-level measurement.",
+   "source_citation": "CPCB National AQI categories (https://airquality.cpcb.gov.in/ccr_docs/How_AQI_Calculated.pdf)",
+   "verification_status": "pending_source_check"
+  }
+ ]
+}

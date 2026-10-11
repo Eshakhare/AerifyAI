@@ -1,0 +1,50 @@
+{
+ "id": "projection_water_rain_01_pm25_180m",
+ "scenario_id": "water_suppression_confounded_rain_01",
+ "intervention_id": "int_water_rain_01",
+ "intervention_revision": 1,
+ "evaluation_plan_id": "evalplan_water_rain_01_v1",
+ "checkpoint_offset_minutes": 180,
+ "metric": "PM2_5_MASS",
+ "status": "confounded_scenario",
+ "action_pre_ug_m3": 96,
+ "action_post_ug_m3": 71,
+ "reference_pre_ug_m3": 94,
+ "reference_post_ug_m3": 70,
+ "effect_ug_m3": -1,
+ "effect_interval": null,
+ "method_version": "scenario_diff_in_diff_v2",
+ "generated_at": "2026-10-28T13:02:00Z",
+ "confounders": [
+  {
+   "code": "RAIN",
+   "state": "TRIGGERED",
+   "outcome": "confounded",
+   "applies_to": "COMPARISON",
+   "observed_value": 1.2,
+   "threshold": 0.5,
+   "unit": "mm/h",
+   "policy_version": "water_suppression_demo_policy_v1",
+   "input_measurement_ids": [
+    "ctx_weather_rain_rain01_1130"
+   ],
+   "display_text": "Rain of 1.2 mm/h in 3 of 3 post-action 15-minute bins (rule: 0.5 mm/h or more in at least 2 bins). The result is flagged as confounded."
+  },
+  {
+   "code": "WIND_SPEED_CHANGE",
+   "state": "DISCLOSED",
+   "outcome": null,
+   "applies_to": "COMPARISON",
+   "observed_value": 0.8,
+   "threshold": 2,
+   "unit": "m/s",
+   "policy_version": "water_suppression_demo_policy_v1",
+   "input_measurement_ids": [],
+   "display_text": "Median wind speed changed by 0.8 m/s, below the 2 m/s exclusion threshold; disclosed, not adjusted."
+  }
+ ],
+ "limitations": [
+  "Synthetic PM2.5 projection; not an observed government intervention",
+  "Rain confounds the pre/post comparison; no improvement is claimed"
+ ]
+}

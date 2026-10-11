@@ -1,10 +1,10 @@
 # Aerify AI: shared architecture (validated hybrid design)
 
 
-**Revision:** 0.8 — geometry transport, CSV artifact delivery and read-only MCP tool layer; decisions locked 10 October 2026.
+**Revision:** 0.9 — context descriptors, structured confounder findings, scenario catalog, legend bands, zone summaries and session roles; decisions locked 11 October 2026.
 
 
-**Revision history:** 0.6-draft locked the execution decisions now expressed as the scope tiers and phases below; 0.7-draft removes person-based planning, adds the task execution order and change management, and folds in the route-entity change set: versioned routes co-planned with the 12 action zones, the Palam–Dwarka flagship proposal (confirmed at Gate 1 from the anchor-overlap table), the AirDelhi manifest row, the 11-district fix and the anchor-state wording guard; `schema_version` moves to `0.7-draft` with it, additively. 0.8-draft adds the geometry-transport decision (§4.8), the CSV/Cloud Storage artifact delivery path (§5), the read-only MCP tool layer over gold views (§12) and task rows 2.6/4.5; `schema_version` moves to `0.8` (additive: `GeometryTransport`/`GeoJSONGeometry` defs, embedded `geometry` on `ZoneVersion`/`RouteVersion`, `geometry_ref` demoted to a nullable server-side provenance pointer); from this revision forward, version strings drop the `-draft` suffix (prior revisions 0.6-draft/0.7-draft/0.8-draft kept their historical names).
+**Revision history:** 0.6-draft locked the execution decisions now expressed as the scope tiers and phases below; 0.7-draft removes person-based planning, adds the task execution order and change management, and folds in the route-entity change set: versioned routes co-planned with the 12 action zones, the Palam–Dwarka flagship proposal (confirmed at Gate 1 from the anchor-overlap table), the AirDelhi manifest row, the 11-district fix and the anchor-state wording guard; `schema_version` moves to `0.7-draft` with it, additively. 0.8-draft adds the geometry-transport decision (§4.8), the CSV/Cloud Storage artifact delivery path (§5), the read-only MCP tool layer over gold views (§12) and task rows 2.6/4.5; `schema_version` moves to `0.8` (additive: `GeometryTransport`/`GeoJSONGeometry` defs, embedded `geometry` on `ZoneVersion`/`RouteVersion`, `geometry_ref` demoted to a nullable server-side provenance pointer); from this revision forward, version strings drop the `-draft` suffix (prior revisions 0.6-draft/0.7-draft/0.8-draft kept their historical names). 0.9 closes six UI-driven gaps: a `ContextDescriptor` shape for weather/satellite `Measurement` rows (§4.9), structured `ConfounderFinding` records replacing confounder strings (§6), the fixed 12-case scenario catalog (§5), `Role`/`Capability`/`SessionInfo` and `GET /v1/me` (§11), server-owned `Legend` bands with `legend_id` on aggregates (§8) and `ZoneSummary` with computed anchor state; it also defines the canonical geometry hash and the `LocationContext`, `ScenarioRun` list and legend endpoints. `schema_version` moves to `0.9`. Breaking changes, migration note: `confounders` items change from string to object, `MapAggregate.category` narrows from string to `BandId`, `ScenarioRun.clock_mode` changes from `real/virtual/retroactive/injected_test` to `REAL/SCENARIO/TEST`, `ScenarioRun` gains required `catalog_version`, `case_id`, `design_intent`, zone-version, plan and route-version fields, and the `Measurement` unit enum gains `mol/m2` and `index`.
 
 
 ## 1. Mission and scope
@@ -125,7 +125,7 @@ The demo core is the complete demonstrable product: provenance rules, audit trai
 | Frontend and public map | District → cell → road map, Near You fallback, provenance/coverage states, zone selection, intervention create/start/complete/media flow, checkpoint timeline, scenario/observed wording | Additional visual polish and nonessential optional-gas panels |
 | Data and geography | AirDelhi import, immutable raw path, Delhi OSM/OSRM road pipeline, versioned segments, one-minute and 15/30/60-minute aggregates, 30-day/12-action generator, cached weather/satellite/facility context | Live hardware adapter and automated Earth Engine refresh; use documented snapshot adapters for the demo |
 | Analysis and workflow | Frozen evaluation plan, reference checks, overlap detection, automatic confounder policy, paired scenarios, completion/+1/+3/+6/+12 checkpoints, virtual clock, deterministic narratives | Optional +24 h checkpoint and statistically adjusted causal model |
-| Contract and platform | Schema/OpenAPI/types, complete officer/public/zone APIs, PostGIS migrations/seeds, Firebase roles, Cloud Tasks idempotency, CI drift gate, staging deployment | BigQuery analytical/AI mirror |
+| Contract and platform | Schema/OpenAPI/types, complete officer/public/zone APIs, PostGIS migrations/seeds, Firebase sign-in with Cloud SQL `app_users` roles, Cloud Tasks idempotency, CI drift gate, staging deployment | BigQuery analytical/AI mirror |
 
 
 ### Task execution order
@@ -139,15 +139,15 @@ The build follows workstreams, not assigned people. Anyone may pick up any task;
 
 | # | Task | Workstream | Depends on |
 | --- | --- | --- | --- |
-| 1.1 | Land `contracts/domain.schema.json`, OpenAPI generation and accepted fixtures | Contract/platform | — |
-| 1.2 | Land road policy (`delhi_osm_250m_v1`, matching thresholds) and evaluation policy (`water_suppression_demo_policy_v1`, overlap policy) as versioned documents | Data/geography + analysis | — |
+| 1.1 | Land `contracts/domain.schema.json`, OpenAPI generation, accepted fixtures and `contracts/tools/validate_contracts.py` | Contract/platform | — |
+| 1.2 | Land road policy (`delhi_osm_250m_v1`, matching thresholds) and evaluation policy (`water_suppression_demo_policy_v1`, overlap policy) as versioned documents, together with the scenario catalog (`scenario_catalog_v1`) and legend band sets (`legend_bands_v1`) | Data/geography + analysis | — |
 | 1.3 | Stand up CI skeleton with the contract drift gate | Contract/platform | 1.1 |
 | 1.4 | Generate deterministic seed fixtures for roads and evaluation cases | Data/geography + analysis | 1.1, 1.2 |
 | 1.5 | Verify IIT Delhi archive coverage over candidate zones and compute the per-zone anchor-overlap table (verified anchors × zone) | Data/geography | — |
 | 1.6 | Joint route/action-zone plan: one artifact choosing the 6–8 synthetic corridors and the 12 action zones together so every action and reference zone sits on a route, consuming the 1.5 table and confirming the flagship zone | Data/geography + analysis | 1.5 |
 
 
-**Gate 1:** schema/OpenAPI/fixtures green in CI; policy versions accepted; joint route/zone plan confirmed — every action and reference zone has route coverage, and the flagship zone has verified observed anchors.
+**Gate 1:** schema/OpenAPI/fixtures green in CI; policy versions accepted; joint route/zone plan confirmed — every action and reference zone has route coverage, and the flagship zone has verified observed anchors; catalog cases S01–S12 are bound to zones and every `ZoneSummary` carries its computed anchor state.
 
 
 **Phase 2 — Data foundation**
@@ -186,7 +186,7 @@ The build follows workstreams, not assigned people. Anyone may pick up any task;
 
 | # | Task | Workstream | Depends on |
 | --- | --- | --- | --- |
-| 4.1 | Public/officer/supervisor/zone APIs against the generated client | Contract/platform | Gate 3 |
+| 4.1 | Public/officer/supervisor/zone/session (`/v1/me`)/legend APIs against the generated client | Contract/platform | Gate 3 |
 | 4.2 | District/cell/road map, Near You, provenance/coverage/no-data states | Frontend | 4.1 |
 | 4.3 | Officer draft/start/complete/media flow and zone catalog | Frontend | 4.1 |
 | 4.4 | Context drawer (weather/satellite/sources), scenario pages with lineage, checkpoint timeline, correction notice | Frontend | 4.1, 3.4 |
@@ -221,8 +221,8 @@ This document is the shared base that implementation branches from. Two independ
 
 | Axis | Where it lives | Bumped when |
 | --- | --- | --- |
-| Architecture revision (`0.8` in the header) | This document | Any change to scope tiers, phases, policies, API surface, storage or evidence rules |
-| `schema_version` (`0.8`) | `contracts/domain.schema.json` and every response's `schema_version` | Any DTO/field/enum change, however small |
+| Architecture revision (`0.9` in the header) | This document | Any change to scope tiers, phases, policies, API surface, storage or evidence rules |
+| `schema_version` (`0.9`) | `contracts/domain.schema.json` and every response's `schema_version` | Any DTO/field/enum change, however small |
 
 
 Change flow:
@@ -361,6 +361,28 @@ District linkage: the zone **entity** (`zones` table row) carries `district_id`,
 - Quarantine invalid units, impossible coordinates/timestamps and duplicates before they reach public aggregates.
 
 
+### 4.9 Weather and satellite context records — locked
+
+
+Weather, regional air-quality model and satellite records are ordinary `Measurement` rows that reuse the existing metrics (`TEMPERATURE`, `RELATIVE_HUMIDITY`, `PRECIPITATION_RATE`, `WIND_SPEED`, `WIND_DIRECTION`, `NO2`, `SO2`, `CO`, `O3`, `PM2_5_MASS`, `PM10_MASS`, plus the new `AEROSOL_INDEX`). There is no separate context entity. What was missing was a defined shape for provider, grid resolution and satellite footprint; the schema now carries it:
+
+
+- Every `origin = modeled_context` measurement must carry `context` (`ContextDescriptor`) and `evidence_state = MODEL_ESTIMATED`; the schema rejects anything else. A `synthetic_scenario` measurement must carry `SYNTHETIC`.
+- Provider and source identity stay in `provenance.provider` / `provenance.source_id`. The descriptor adds `product_id`, `product_version`, `measurement_basis`, `temporal_aggregation`, a server-composed `resolution_label` for display, an optional satellite `footprint` (`GeometryTransport`) and the retrieval quality fields `qa_value` and `cloud_fraction`.
+- Grid resolution is `spatial_support.nominal_resolution_m`, which is now mandatory whenever `spatial_support.kind` is `grid_cell` or `satellite_footprint`.
+- Valid time is `event_time`/`event_time_end` (for a satellite the sensing start/end of the overpass); `processed_at` is ingestion time.
+
+
+| `context_kind` | `spatial_support.kind` | `measurement_basis` | Unit | `temporal_aggregation` |
+| --- | --- | --- | --- | --- |
+| `weather_model` | `grid_cell` | `surface_meteorology` | native weather units | `instant`, `hourly_mean`, `hourly_accumulation` or `daily_mean` |
+| `air_quality_model` | `grid_cell` | `surface_concentration` | `ug/m3`, `ppb`, … | `hourly_mean` or `daily_mean` |
+| `satellite_retrieval` | `satellite_footprint` (footprint polygon required) | `column_density` or `index` | `mol/m2` or `index` | `overpass_snapshot` |
+
+
+Satellite column densities are never expressed as `ug/m3` and are never blended into PM colours; a low `qa_value` or high `cloud_fraction` sets the `cloud_affected` quality flag. `GET /v1/public/locations/{id}/context` returns the `LocationContext` DTO: `weather`, `satellite` and `air_quality_model` measurement arrays, ranked `nearby_sources` (1 km and 3 km), a resolution notice and the standing no-causation disclaimer.
+
+
 ## 5. Synthetic scenario engine
 
 
@@ -396,12 +418,42 @@ For every synthetic intervention generate paired `WITHOUT_ACTION` and `WITH_ACTI
 Synthetic output must expose:
 
 
-- `scenario_id`, `generator_version` and seed;
+- `scenario_id`, `catalog_version`, `case_id`, `design_intent`, `generator_version` and seed;
 - observed anchor IDs;
 - context source IDs and spatial resolution;
 - assumptions and generated-variable list;
 - `valid_time`, `generated_at` and quality flags; and
 - a public label whose wording reflects the anchor state: **Synthetic demo — based on historical PM observations and contextual models** when verified observed anchors cover the zone, and **Fully synthetic demonstration — no verified observed anchors in this zone** when none do. The label is computed from the per-zone anchor-overlap table, never hardcoded.
+
+
+### Scenario catalog — locked
+
+
+The 12 action cases are fixed in `data/scenarios/scenario-catalog.v1.json` (`scenario_catalog_v1`). The generator does not invent cases. All 12 are evaluated `water_suppression` interventions; the other intervention types stay schema-reserved with no response curve. The catalog is generator input, not output: it fixes design intent, injected confounders and assumed response parameters, while statuses are always computed by the evaluator. Zone binding is confirmed by task 1.6 at Gate 1; the names are candidate Delhi areas whose verified-anchor coverage is not yet known.
+
+
+| Case | `scenario_id` | Design intent | Candidate zone (pending Gate 1) |
+| --- | --- | --- | --- |
+| S01 | `water_suppression_sustained_01` | `SUSTAINED_RESPONSE` | Palam–Dwarka corridor (flagship slot) |
+| S02 | `water_suppression_sustained_02` | `SUSTAINED_RESPONSE` | Anand Vihar ISBT vicinity |
+| S03 | `water_suppression_sustained_03` | `SUSTAINED_RESPONSE` | Rohini Outer Ring Road stretch |
+| S04 | `water_suppression_temporary_01` | `TEMPORARY_RESPONSE` | Wazirpur industrial area approach |
+| S05 | `water_suppression_temporary_02` | `TEMPORARY_RESPONSE` | Mundka–Nangloi road |
+| S06 | `water_suppression_temporary_03` | `TEMPORARY_RESPONSE` | Punjabi Bagh Ring Road stretch |
+| S07 | `water_suppression_no_effect_01` | `NO_RESPONSE` | Okhla Phase II approach |
+| S08 | `water_suppression_no_effect_02` | `NO_RESPONSE` | Narela–Bawana road |
+| S09 | `water_suppression_no_effect_03` | `NO_RESPONSE` | Jahangirpuri GT Karnal Road stretch |
+| S10 | `water_suppression_confounded_rain_01` | `RAIN_CONFOUNDER` | ITO–Vikas Marg stretch |
+| S11 | `water_suppression_confounded_wind_01` | `WIND_CONFOUNDER` | Vivek Vihar–Patparganj industrial approach |
+| S12 | `water_suppression_confounded_overlap_01` | `ACTION_OVERLAP` | Sarai Kale Khan–Ring Road stretch |
+
+
+- **Flagship slot:** S01 binds to the Gate 1 flagship. If the anchor-overlap table flips the flagship to Anand Vihar ISBT, the two zones swap slots (S01 ↔ S02); case design does not change.
+- **Overlap case:** S12 needs an interfering action. It is one non-evaluated auxiliary `road_sweeping` intervention that exists only inside the `ActionOverlapAssessment`; it has no projection or evaluation, so the evaluated count stays 12 and exactly one case contains overlap. Expected S12 outcome is `inconclusive` (usable bins fall below the frozen gate); S10 and S11 are `confounded`.
+- **Scheduling:** case *n* runs on scenario day 2*n*, so no two cases share a day and the declared overlap is the only space-time interference.
+- **Policy triggers without a demo case** (traffic divergence, low coverage, insufficient bins, failed pre-trend, single wind trigger, reference contamination alone) are covered by task 1.4 evaluation fixtures, not extra demo cases.
+- **Run lineage:** each `ScenarioRun` records `catalog_version`, `case_id` and `design_intent`, its action/reference zone-version IDs, the evaluation-plan ID and its `route_version_ids` (at least one). `clock_mode` uses the same `REAL`/`SCENARIO`/`TEST` enum as the API clock.
+- Assumed response parameters in the catalog (peak reduction, onset, half-life) are demo assumptions flagged `initial_unvalidated_demo_assumptions`; changing any value creates a new catalog version.
 
 
 ### Demo artifact delivery — locked
@@ -509,6 +561,17 @@ The demo does **not** fit weather-adjusted causal coefficients. It uses predecla
 Below-threshold weather/traffic changes remain disclosed, not statistically adjusted. These are fixed demo-policy values, not universal scientific thresholds. Publishing a real observed-effect association remains disabled until an environmental reviewer approves a production policy version.
 
 
+### Confounder findings — locked
+
+
+`confounders` on `ScenarioProjection` and `ObservedEvaluation` is a list of structured `ConfounderFinding` records, not strings. Each carries `code` (`RAIN`, `WIND_SPEED_CHANGE`, `WIND_DIRECTION_SHIFT`, `TRAFFIC_DIVERGENCE`, `ACTION_OVERLAP`, `REFERENCE_CONTAMINATED`, `LOW_COVERAGE`, `INSUFFICIENT_BINS`, `PRETREND_FAILED`), `state` (`DISCLOSED` below threshold, or `TRIGGERED`), the forced `outcome` (`confounded` or `inconclusive`), `applies_to`, `observed_value`, `threshold`, `unit`, `policy_version`, `input_measurement_ids` and a server-composed `display_text`. The UI renders `display_text` and may style by `code` and `state`; it never composes wording or evaluates thresholds. `limitations` remain plain server-supplied strings.
+
+
+- Triggered `RAIN`, `WIND_*` and `TRAFFIC_DIVERGENCE` force `confounded`; triggered `LOW_COVERAGE`, `INSUFFICIENT_BINS` and `PRETREND_FAILED` force `inconclusive`; `ACTION_OVERLAP` and `REFERENCE_CONTAMINATED` force whichever the bin gate dictates.
+- Precedence: any triggered `inconclusive` finding makes the status inconclusive; otherwise any triggered `confounded` finding makes it confounded.
+- The schema enforces status consistency: an improvement or no-change status cannot coexist with a triggered finding, and a confounded/inconclusive status must contain a triggered finding of the matching outcome.
+
+
 ### Authoritative clock
 
 
@@ -538,8 +601,17 @@ Below-threshold weather/traffic changes remain disclosed, not statistically adju
 - Display Delhi as a district choropleth or accessible tiled/hex map with PM2.5, PM10 or official AQI selection.
 - Each district shows value, category, source type, last update, coverage and observed/modelled/synthetic badge.
 - Selecting a district opens its 2–3 km cells; selecting a cell opens named areas and measured road segments.
-- Highlight high values using the selected metric's published thresholds. Provide a legend and text category for colour-blind accessibility.
+- Colour by `MapAggregate.category`, which the server computes from a versioned legend (see Legend bands below). Pair every colour with the band's text label for colour-blind accessibility.
 - Satellite, weather, official stations, mobile routes and possible-source layers can be toggled independently.
+
+
+### Legend bands — locked
+
+
+- `MapAggregate.category` is a `BandId` (`GOOD`, `SATISFACTORY`, `MODERATE`, `POOR`, `VERY_POOR`, `SEVERE`) computed on the server as the band containing `value` (`boundary_rule = upper_inclusive`: lower < value ≤ upper, with the first band including 0). It is null whenever `value` is null.
+- **The API returns the legend bands.** `GET /v1/public/legends?metric=` returns `Legend[]`, and every aggregate with a category carries its `legend_id`. Category and legend come from one versioned source, so a legend can never disagree with the colours after a threshold revision. The UI holds a palette keyed by band `id`/`severity_rank` and always shows the band label as text; it hard-codes no thresholds.
+- Band sets live in `data/legends/legend-bands.v1.json`: `cpcb_pm25_conc_v1` and `cpcb_pm10_conc_v1` (`kind = concentration_band`, mandatory "not an AQI" notice) and `cpcb_aqi_v1` (`kind = official_aqi`, official station AQI only). PM1 and context metrics have no legend and are not band-coloured.
+- Bands are immutable per `id`/`version`; a revision creates a new legend. Values are marked `pending_source_check` until compared with the CPCB document.
 
 
 ### “Near you” card
@@ -593,9 +665,9 @@ Suggested tables:
 - `facilities`, `source_geometries`, `administrative_areas`, `analysis_cells`, `road_network_versions`, `road_segments`, `road_segment_crosswalks`, `observation_road_matches`
 - `scenario_definitions`, `scenario_runs`, `scenario_values`, `generation_lineage`
 - `hotspots`, `map_aggregates`, `simulations`
-- `zones`, `zone_versions`, `interventions`, `intervention_revisions`, `evaluation_plans`, `action_checkpoint_schedules`, `action_context_snapshots`
+- `zones`, `zone_versions`, `zone_anchor_overlap`, `interventions`, `intervention_revisions`, `evaluation_plans`, `action_checkpoint_schedules`, `action_context_snapshots`
 - `scenario_results`, `observed_evaluations`, `verification_pollutants`
-- `camera_media`, `runtime_clocks`, `evaluation_jobs`, `audit_events`
+- `camera_media`, `runtime_clocks`, `evaluation_jobs`, `audit_events`, `app_users`, `legend_band_sets`, `scenario_catalog_entries`
 
 
 Raw records are immutable. Derived aggregates and scenario outputs reference their complete input set or an immutable input snapshot. PostGIS performs point-in-district, cell and radius queries. BigQuery may be added when real history or scale justifies it.
@@ -613,9 +685,12 @@ Partition/index event-time tables by event date/time and source/device; add spat
 | `GET /v1/public/districts/{id}/cells?metric=&time=` | 2–3 km cell drill-down. |
 | `GET /v1/public/cells/{id}/roads?metric=&time=` | Measured roads/areas and freshness. |
 | `GET /v1/public/nearby?lat=&lng=&radius_km=` | Nearest observation, station and nearby-city summaries. |
-| `GET /v1/public/locations/{id}/context` | Weather, satellite and possible nearby sources. |
-| `GET /v1/public/scenarios/{id}` | Synthetic demo timeline, lineage and projection. |
-| `GET /v1/public/zones?purpose=&district_id=` | Public zone catalog; filters on the zone entity's `district_id` (§4.8); catalog DTO carries `district_id`. |
+| `GET /v1/public/locations/{id}/context` | `LocationContext`: weather, satellite, regional air-quality model and possible nearby sources (§4.9). |
+| `GET /v1/public/scenarios` | The 12 catalog cases as `ScenarioRun[]` (case ID, design intent, label, lineage) for the scenario explorer (§5). |
+| `GET /v1/public/scenarios/{id}` | One `ScenarioRun` with its timeline, lineage and projections. |
+| `GET /v1/public/legends?metric=` | `Legend[]` band sets that define `MapAggregate.category` (§8). |
+| `GET /v1/me` | `SessionInfo`: role, capabilities, auth mode, clock (§11). |
+| `GET /v1/public/zones?purpose=&district_id=` | Public zone catalog; filters on the zone entity's `district_id` (§4.8); returns `ZoneSummary[]` (district, anchor state, server-computed display label, `observation_grade_wording_allowed`, geometry status, flagship status, catalog case, route versions). |
 | `GET /v1/public/zones/{id}` | Zone metadata and versioned geometry (embedded `geometry`, hash-verifiable; §4.8). |
 | `GET /v1/public/geometries?ids=...` | Batch geometry fetch for zones/routes by ID, as `GeometryTransport` (§4.8). |
 | `GET /v1/public/interventions?zone_id=&status=&cursor=` | Paginated public intervention list. |
@@ -644,10 +719,21 @@ Mutating endpoints require an idempotency key and optimistic revision. Role chec
 - FastAPI on Cloud Run as the only operational API.
 - Private Cloud Run worker invoked by OIDC-authenticated Cloud Tasks.
 - Google Cloud SQL for PostgreSQL with the PostGIS extension is the only operational database in development, CI and demo.
-- Firebase Auth for officer access; backend verifies tokens and database roles.
-- Secret Manager for third-party API keys; ADC/workload identity for Google Cloud services.
+- Firebase Auth for sign-in only; the backend verifies ID tokens and reads roles from the Cloud SQL `app_users` table (see Roles and auth).
+- Secret Manager for third-party API keys only (weather, satellite and registry providers); ADC/workload identity for every Google Cloud service, **including Gemini on Vertex AI**, so there is no Gemini API key anywhere (see Gemini access).
 - Cloud Storage for restricted media.
 - Cache public aggregates and contextual API results by source time/resolution to control cost and rate limits.
+
+
+### Roles and auth — locked
+
+
+- Roles are `PUBLIC` (anonymous), `OFFICER` and `SUPERVISOR`. `SUPERVISOR` has every `OFFICER` capability plus `SUBMIT_CORRECTION`. A role is never a field on a public DTO and is never asserted by the client.
+- Firebase Auth is the sign-in (identity) provider only; it stores no roles and no data. FastAPI verifies the Firebase ID token to obtain the user's stable identity (`uid`), then reads the role from the Cloud SQL `app_users` table (`firebase_uid`, `role`, `active`, pseudonymous `actor_ref`), which is the single source of truth for roles. No Firebase custom claims are used. A verified token with no active `app_users` row is treated as `PUBLIC`.
+- `GET /v1/me` returns `SessionInfo`: `role`, `capabilities`, `auth_mode` (`FIREBASE` or `FIXTURE`) and clock metadata. Anonymous callers get `PUBLIC`. Capabilities (`VIEW_PUBLIC`, `VIEW_RESTRICTED_MEDIA`, `CREATE_DRAFT`, `EDIT_DRAFT`, `START_ACTION`, `COMPLETE_ACTION`, `ATTACH_MEDIA`, `SUBMIT_CORRECTION`) exist so the UI can show controls and denial states; FastAPI enforces every check and returns 403 regardless of UI state.
+- Service callers (`/v1/internal/*`, Cloud Tasks) authenticate with OIDC service accounts and have no human role.
+- The deployed demo uses the same path: seeded Firebase sign-in accounts mapped to seeded `app_users` rows (one officer, one supervisor), never an unauthenticated role header. A role switcher exists only in the UI's `FixtureApi` mode, which serves fixture `SessionInfo` (`auth_mode = FIXTURE`); in `HttpApi` mode it becomes a demo sign-in picker for the seeded accounts, with roles still read from `app_users`.
+- Officer identity (`actor_ref`) appears only in `audit_events` and officer/supervisor views; public DTOs never carry it (§10).
 
 
 ### Development, staging and CI
@@ -678,6 +764,16 @@ Read-only tools may expose hotspot evidence, map coverage, weather context, sate
 
 
 If Gemini is unavailable, deterministic summaries remain available and the product continues to function.
+
+
+### Gemini access — locked
+
+
+- Gemini is called through **Vertex AI** (the Google Gen AI SDK or ADK configured for Vertex) using Application Default Credentials. The FastAPI Cloud Run service account holds `roles/aiplatform.user`; developers use their own ADC. No Gemini API key, AI Studio key or static credential exists in the repository, Secret Manager or CI.
+- The pinned model is **Gemini 2.5 Flash-Lite (`gemini-2.5-flash-lite`)**; the backend rejects any higher-cost model tier unless configuration explicitly overrides it. Note: Google limits `2.5` model access to projects with prior usage; if a new project lacks `2.5` access, fallback to `gemini-3.5-flash-lite` via configuration. Model ID, region and generation settings remain configuration, not hardcoded strings, and the exact model version used is recorded with every stored narrative.
+- **Pay-as-you-go cost controls:** enforce a Cloud Billing enforced spend cap budget on Vertex AI, set explicit Vertex AI per-minute/daily request and token quotas in GCP IAM & Admin -> Quotas, and enforce a strict application-level daily call/token ceiling in backend code that fails closed to deterministic summaries when reached.
+- Calls are bounded: low-latency explanations use a small validated evidence packet through the read-only MCP tools below; Vertex quota or outage falls back to the deterministic summaries.
+- A Google AI Studio prototype may use a temporary AI Studio key during UI design only; it is never carried into the repository or deployment.
 
 
 ### Read-only MCP tool layer — locked
@@ -723,6 +819,12 @@ Use BigQuery AI only for asynchronous, reviewable enrichment such as batch draft
 20. Replace the local database topology with direct Google Cloud SQL PostgreSQL/PostGIS access, isolated dev/CI/demo databases, IAM/connector authentication, bounded connection pools and required CI contract-drift gates.
 21. Add versioned `routes`/`route_versions` with observed-trace and synthetic-corridor purposes, and plan the 6–8 synthetic corridors jointly with the 12 action zones so every zone has route coverage.
 22. Add the per-zone anchor-overlap table, confirm the flagship zone from it at Gate 1, and compute synthetic display wording and Near You fallback wording from the zone's verified anchor state.
+23. Define the weather/satellite `ContextDescriptor`, the `LocationContext` DTO and the `AEROSOL_INDEX`/`mol/m2`/`index` additions.
+24. Replace confounder strings with structured `ConfounderFinding` records and enforce status consistency in the schema.
+25. Fix the 12-case scenario catalog and add `catalog_version`, `case_id`, `design_intent` and zone/plan/route lineage to `ScenarioRun`.
+26. Add `Role`, `Capability`, `SessionInfo` and `GET /v1/me`; keep roles off public DTOs.
+27. Add server-owned legend bands, `legend_id` on aggregates and `GET /v1/public/legends`.
+28. Add `ZoneSummary` with computed anchor state; mark pre-Gate-1 geometry as `PLACEHOLDER` and define the canonical geometry hash.
 
 
 ## 14. Release gates
@@ -747,6 +849,12 @@ Use BigQuery AI only for asynchronous, reviewable enrichment such as batch draft
 - Map matching records network/segmentation/matcher versions and rejects low-confidence points.
 - Every action and reference zone in the demo dataset sits on a route version; generator lineage records the route version IDs it used.
 - A zone with zero verified observed anchors displays the fully-synthetic label and observation-grade wording is suppressed for it.
+- A zone whose anchor state is `UNVERIFIED` (before Gate 1) fails closed to the same fully-synthetic wording; placeholder geometry is never loaded into Cloud SQL.
+- A `modeled_context` measurement without a `ContextDescriptor`, or not `MODEL_ESTIMATED`, fails schema validation; a satellite retrieval without a footprint or a column density in `ug/m3` fails validation.
+- Confounder findings are structured; a confounded or inconclusive status without a matching triggered finding, or an improvement status with any triggered finding, fails schema validation.
+- `MapAggregate.category` is always a band of the legend named by `legend_id`; the UI contains no threshold constants.
+- The scenario catalog contains exactly 12 evaluated cases (3/3/3/3) with exactly one overlap case; `python architecture/contracts/tools/validate_contracts.py` passes in CI.
+- Role checks are enforced by FastAPI; `GET /v1/me` capabilities never grant more than the verified role.
 - API, worker, UI freshness and caches agree on the same server-provided effective time.
 - OpenAPI → generated TypeScript produces no CI diff and a unique empty schema in the `aerify_ci` Cloud SQL/PostGIS database migrates/seeds successfully.
 

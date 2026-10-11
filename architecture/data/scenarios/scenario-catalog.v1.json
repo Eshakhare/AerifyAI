@@ -1,0 +1,115 @@
+{
+ "schema_version": "0.9",
+ "catalog_id": "scenario_catalog_v1",
+ "status": "accepted_case_design_zone_binding_pending_gate_1",
+ "description": "The 12 evaluated water-suppression cases of the 30-day demo. This file fixes the case list, design intent, injected confounders and assumed response parameters. It is a generator input, never a result: statuses are computed by the evaluator. Zone binding (`zone_binding`) is confirmed by task 1.6 at Gate 1; names below are candidate Delhi areas whose verified-anchor coverage is not yet known. A catalog change creates a new `catalog_id` version.",
+ "profile": {
+  "evaluated_case_count": 12,
+  "intervention_type": "water_suppression",
+  "mix": {"sustained": 3, "temporary": 3, "no_effect": 3, "confounded_or_inconclusive": 3},
+  "overlap_case_count": 1,
+  "scenario_day_rule": "case n runs on scenario day 2*n, so no two cases share a day and the only space-time interference is the declared overlap case",
+  "flagship_slot_case_id": "S01",
+  "flagship_rule": "S01 binds to the Gate 1 flagship (Palam–Dwarka proposed; Anand Vihar ISBT if the anchor-overlap table flips it). The non-flagship of the two takes S02."
+ },
+ "auxiliary_actions": [
+  {
+   "id": "aux_road_sweep_for_S12",
+   "intervention_type": "road_sweeping",
+   "evaluated": false,
+   "purpose": "Interfering action for the overlap case S12 only. It has no scenario projection or observed evaluation of its own and appears only in the ActionOverlapAssessment.",
+   "overlap_minutes": 90
+  }
+ ],
+ "assumption_status": "initial_unvalidated_demo_assumptions",
+ "cases": [
+  {
+   "case_id": "S01", "scenario_id": "water_suppression_sustained_01", "design_intent": "SUSTAINED_RESPONSE", "scenario_day": 2,
+   "candidate_zone": "Palam–Dwarka corridor", "zone_slug": "palam_dwarka", "flagship_slot": true,
+   "response": {"peak_reduction_fraction": 0.25, "onset_minutes": 15, "half_life_minutes": 2880},
+   "injected_confounder": null,
+   "gate3_expectation": "improvement status on at least one of PM2.5/PM10 at +3 h and +6 h"
+  },
+  {
+   "case_id": "S02", "scenario_id": "water_suppression_sustained_02", "design_intent": "SUSTAINED_RESPONSE", "scenario_day": 4,
+   "candidate_zone": "Anand Vihar ISBT vicinity", "zone_slug": "anand_vihar", "flagship_slot": false,
+   "response": {"peak_reduction_fraction": 0.22, "onset_minutes": 15, "half_life_minutes": 2880},
+   "injected_confounder": null,
+   "gate3_expectation": "improvement status on at least one of PM2.5/PM10 at +3 h and +6 h"
+  },
+  {
+   "case_id": "S03", "scenario_id": "water_suppression_sustained_03", "design_intent": "SUSTAINED_RESPONSE", "scenario_day": 6,
+   "candidate_zone": "Rohini Outer Ring Road stretch", "zone_slug": "rohini_outer_ring_road", "flagship_slot": false,
+   "response": {"peak_reduction_fraction": 0.20, "onset_minutes": 20, "half_life_minutes": 2880},
+   "injected_confounder": null,
+   "gate3_expectation": "improvement status on at least one of PM2.5/PM10 at +3 h and +6 h"
+  },
+  {
+   "case_id": "S04", "scenario_id": "water_suppression_temporary_01", "design_intent": "TEMPORARY_RESPONSE", "scenario_day": 8,
+   "candidate_zone": "Wazirpur industrial area approach", "zone_slug": "wazirpur_industrial_approach", "flagship_slot": false,
+   "response": {"peak_reduction_fraction": 0.25, "onset_minutes": 10, "half_life_minutes": 90},
+   "injected_confounder": null,
+   "gate3_expectation": "improvement at +1 h, no measurable change by +6 h and +12 h"
+  },
+  {
+   "case_id": "S05", "scenario_id": "water_suppression_temporary_02", "design_intent": "TEMPORARY_RESPONSE", "scenario_day": 10,
+   "candidate_zone": "Mundka–Nangloi road", "zone_slug": "mundka_nangloi_road", "flagship_slot": false,
+   "response": {"peak_reduction_fraction": 0.22, "onset_minutes": 10, "half_life_minutes": 120},
+   "injected_confounder": null,
+   "gate3_expectation": "improvement at +1 h, no measurable change by +6 h and +12 h"
+  },
+  {
+   "case_id": "S06", "scenario_id": "water_suppression_temporary_03", "design_intent": "TEMPORARY_RESPONSE", "scenario_day": 12,
+   "candidate_zone": "Punjabi Bagh Ring Road stretch", "zone_slug": "punjabi_bagh_ring_road", "flagship_slot": false,
+   "response": {"peak_reduction_fraction": 0.20, "onset_minutes": 15, "half_life_minutes": 120},
+   "injected_confounder": null,
+   "gate3_expectation": "improvement at +1 h, no measurable change by +6 h and +12 h"
+  },
+  {
+   "case_id": "S07", "scenario_id": "water_suppression_no_effect_01", "design_intent": "NO_RESPONSE", "scenario_day": 14,
+   "candidate_zone": "Okhla Phase II approach", "zone_slug": "okhla_phase_2_approach", "flagship_slot": false,
+   "response": {"peak_reduction_fraction": 0.0, "onset_minutes": 0, "half_life_minutes": 1},
+   "injected_confounder": null,
+   "gate3_expectation": "no measurable change at every checkpoint"
+  },
+  {
+   "case_id": "S08", "scenario_id": "water_suppression_no_effect_02", "design_intent": "NO_RESPONSE", "scenario_day": 16,
+   "candidate_zone": "Narela–Bawana road", "zone_slug": "narela_bawana_road", "flagship_slot": false,
+   "response": {"peak_reduction_fraction": 0.0, "onset_minutes": 0, "half_life_minutes": 1},
+   "injected_confounder": null,
+   "gate3_expectation": "no measurable change at every checkpoint"
+  },
+  {
+   "case_id": "S09", "scenario_id": "water_suppression_no_effect_03", "design_intent": "NO_RESPONSE", "scenario_day": 18,
+   "candidate_zone": "Jahangirpuri GT Karnal Road stretch", "zone_slug": "jahangirpuri_gt_karnal_road", "flagship_slot": false,
+   "response": {"peak_reduction_fraction": 0.0, "onset_minutes": 0, "half_life_minutes": 1},
+   "injected_confounder": null,
+   "gate3_expectation": "no measurable change at every checkpoint"
+  },
+  {
+   "case_id": "S10", "scenario_id": "water_suppression_confounded_rain_01", "design_intent": "RAIN_CONFOUNDER", "scenario_day": 20,
+   "candidate_zone": "ITO–Vikas Marg stretch", "zone_slug": "ito_vikas_marg", "flagship_slot": false,
+   "response": {"peak_reduction_fraction": 0.20, "onset_minutes": 15, "half_life_minutes": 480},
+   "injected_confounder": {"kind": "RAIN", "rain_rate_mm_h": 1.2, "post_bins_with_rain": 3},
+   "gate3_expectation": "RAIN finding TRIGGERED; status confounded; never an improvement status"
+  },
+  {
+   "case_id": "S11", "scenario_id": "water_suppression_confounded_wind_01", "design_intent": "WIND_CONFOUNDER", "scenario_day": 22,
+   "candidate_zone": "Vivek Vihar–Patparganj industrial approach", "zone_slug": "vivek_vihar_patparganj_approach", "flagship_slot": false,
+   "response": {"peak_reduction_fraction": 0.20, "onset_minutes": 15, "half_life_minutes": 480},
+   "injected_confounder": {"kind": "WIND", "wind_speed_change_m_s": 3.0, "wind_direction_shift_degrees": 60},
+   "gate3_expectation": "WIND_SPEED_CHANGE and WIND_DIRECTION_SHIFT findings TRIGGERED; status confounded"
+  },
+  {
+   "case_id": "S12", "scenario_id": "water_suppression_confounded_overlap_01", "design_intent": "ACTION_OVERLAP", "scenario_day": 24,
+   "candidate_zone": "Sarai Kale Khan–Ring Road stretch", "zone_slug": "sarai_kale_khan_ring_road", "flagship_slot": false,
+   "response": {"peak_reduction_fraction": 0.20, "onset_minutes": 15, "half_life_minutes": 480},
+   "injected_confounder": {"kind": "ACTION_OVERLAP", "interfering_action_id": "aux_road_sweep_for_S12", "overlap_minutes": 90, "reference_contaminated": true},
+   "gate3_expectation": "ACTION_OVERLAP and INSUFFICIENT_BINS findings TRIGGERED; status inconclusive (usable bins below the frozen gate)"
+  }
+ ],
+ "policy_test_cases": {
+  "description": "Policy triggers that no demo case exercises are covered by task 1.4 evaluation fixtures, not by extra demo cases.",
+  "cases": ["TRAFFIC_DIVERGENCE above 0.20", "LOW_COVERAGE below 75%", "INSUFFICIENT_BINS below 3", "PRETREND_FAILED", "WIND_SPEED_CHANGE alone", "WIND_DIRECTION_SHIFT alone", "REFERENCE_CONTAMINATED alone"]
+ }
+}

@@ -1,7 +1,7 @@
-# Aerify AI architecture handoff
+# Aerify AI architecture handoff (Revision 0.9)
 
 
-This handoff reflects the decisions made through **10 October 2026**, including the demo-core scope tiers, the task execution order, the route-entity change set and reviewer gaps B1–B8.
+**Architecture & Schema Version:** `0.9` — Updated **11 October 2026** (includes the six UI-driven gap closures, Gemini 2.5 Flash-Lite on Vertex AI cost controls, demo-core scope tiers, task execution order, route-entity change set, and reviewer gaps B1–B8).
 
 
 Aerify AI's Delhi demo uses a hybrid evidence model: real historical bus/station PM observations, regional weather and satellite context, nearby industrial/source geography and deterministic synthetic local/post-action data. All records preserve provenance, time, spatial support and units. Synthetic scenario projections stay separate from future evaluations based on observed pre/post data.
@@ -43,6 +43,15 @@ The architecture in `docs/architecture.md` is the team's shared base, kept in th
 | `contracts/fixtures/camera-event.synthetic.json` | Restricted illustrative-media event; explicitly excluded from AQI and impact verification. |
 | `contracts/fixtures/public-intervention.synthetic.json` | Public water-suppression response with three timestamps and separate synthetic projections/observed evaluations. |
 | `contracts/fixtures/action-overlap.synthetic.json` | Required overlapping-action case that excludes contaminated bins and becomes inconclusive. |
+| `contracts/fixtures/location-context.synthetic.json` | `LocationContext` with weather, regional model and satellite `Measurement` rows carrying `ContextDescriptor`. |
+| `contracts/fixtures/scenario-run.synthetic.json` | `ScenarioRun` for catalog case S02 with catalog, zone, plan and route lineage. |
+| `contracts/fixtures/scenario-projection.confounded.synthetic.json` | Rain-confounded projection with structured `ConfounderFinding` records. |
+| `contracts/fixtures/zone-catalog.synthetic.json` | `ZoneSummary[]` for the 12 candidate action zones; all `UNVERIFIED` before Gate 1. |
+| `contracts/fixtures/zone-version.palam-dwarka.placeholder.json` | Coarse placeholder geometry for the proposed flagship; never loaded into Cloud SQL. |
+| `contracts/fixtures/session.officer.synthetic.json` | `SessionInfo` for an officer. |
+| `data/legends/legend-bands.v1.json` | Server-owned legend band sets behind `MapAggregate.category`. |
+| `data/scenarios/scenario-catalog.v1.json` | The accepted 12 scenario cases (generator input). |
+| `contracts/tools/validate_contracts.py` | Executable contract gate for all of the above. |
 | `docs/architecture.md` | Scope tiers, task execution order, change management, data fusion, scenario engine, maps, APIs, services and AI boundaries. |
 | `docs/role-prompts.md` | Paste-ready task instructions for the four workstreams; task-based, not person-based. |
 | `docs/pricing.md` | Deployment estimates and cost controls. |
@@ -57,11 +66,17 @@ The architecture in `docs/architecture.md` is the team's shared base, kept in th
 4. Workstream prompts and implementation details.
 
 
-The schema is `0.8` (additive geometry transport over `0.7-draft`). Do not promote it to `1.0` until the exact action/reference geometry, current feed access, aggregation freshness/coverage rules, CPCB calculation version and production observed-evaluation policy are accepted. Every schema change must update fixtures, backend models/OpenAPI, generated TypeScript and both consumers together, per the change-management section of `docs/architecture.md`.
+The schema is `0.9` (context descriptors, structured confounders, scenario-catalog fields, legend bands, zone summaries and session roles over `0.8`; `confounders` items, `MapAggregate.category` and `ScenarioRun.clock_mode` changed meaning, see the revision history in `docs/architecture.md`). Do not promote it to `1.0` until the exact action/reference geometry, current feed access, aggregation freshness/coverage rules, CPCB calculation version and production observed-evaluation policy are accepted. Every schema change must update fixtures, backend models/OpenAPI, generated TypeScript and both consumers together, per the change-management section of `docs/architecture.md`. Run `python architecture/contracts/tools/validate_contracts.py` (needs `jsonschema`) before every contract change; it validates all fixtures, the legend sets, the scenario catalog, geometry hashes and the schema's negative guards.
 
 
 All files under `contracts/fixtures/` are executable examples, not additional sources of truth. Validate each against its matching `$defs` entry before backend/frontend integration. Synthetic fixtures must keep their permanent synthetic provenance and public disclaimer.
 
 
+## Architecture version history
 
+> **Team rule:** Whenever anyone on the team makes any change to the architecture or contracts, always bump the version by `+1` (for example, `0.9` → `0.10`) across the architecture docs/schema and add a new row at the bottom of this table listing the changes in short, simple bullet points.
 
+| Version | Changes |
+| --- | --- |
+| **0.8** | - Architecture created |
+| **0.9** | - Added weather and satellite context metadata (`ContextDescriptor`) and `/v1/public/locations/{id}/context` endpoint<br>- Changed `confounders` from plain text to structured objects (`ConfounderFinding`)<br>- Added fixed 12-scenario catalog (`S01`–`S12` in `scenario-catalog.v1.json`)<br>- Kept user roles (`PUBLIC`, `OFFICER`, `SUPERVISOR`) in Cloud SQL `app_users` (Firebase Auth for sign-in only) and added `/v1/me`<br>- Moved map category and AQI/PM threshold bands to the server (`legend-bands.v1.json` and `/v1/public/legends`)<br>- Added zone summary endpoint (`/v1/public/zones`), Palam–Dwarka placeholder fixture, and canonical `sha256:` geometry hash rule<br>- Pinned Vertex AI to **`gemini-2.5-flash-lite`** via Cloud Run service account (no API key) with billing spend cap and daily call limits<br>- Added `validate_contracts.py` to check all schemas, fixtures, legends, and scenarios |
