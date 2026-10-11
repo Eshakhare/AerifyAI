@@ -32,7 +32,7 @@
   },
   {
    "case_id": "S02", "scenario_id": "water_suppression_sustained_02", "design_intent": "SUSTAINED_RESPONSE", "scenario_day": 4,
-   "candidate_zone": "Anand Vihar ISBT vicinity", "zone_slug": "anand_vihar", "flagship_slot": false,
+   "candidate_zone": "Anand Vihar ISBT vicinity", "zone_slug": "anand_vihar_isbt", "flagship_slot": false,
    "response": {"peak_reduction_fraction": 0.22, "onset_minutes": 15, "half_life_minutes": 2880},
    "injected_confounder": null,
    "gate3_expectation": "improvement status on at least one of PM2.5/PM10 at +3 h and +6 h"
