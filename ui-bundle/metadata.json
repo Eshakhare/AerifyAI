@@ -1,0 +1,6 @@
+{
+  "name": "Aerify AI",
+  "description": "Delhi Environmental Intelligence & Municipal Action Platform",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}

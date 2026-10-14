@@ -1,0 +1,206 @@
+[
+ {
+  "zone_id": "action_zone_palam_dwarka_demo",
+  "name": "Palam–Dwarka corridor",
+  "district_id": null,
+  "purposes": [
+   "ACTION"
+  ],
+  "latest_zone_version_id": "zonev_action_palam_dwarka_demo_1",
+  "anchor_state": "UNVERIFIED",
+  "verified_anchor_count": null,
+  "display_label": "Fully synthetic demonstration — no verified observed anchors in this zone",
+  "observation_grade_wording_allowed": false,
+  "geometry_status": "PLACEHOLDER",
+  "flagship_status": "PROPOSED",
+  "scenario_case_id": "S01",
+  "route_version_ids": []
+ },
+ {
+  "zone_id": "action_zone_anand_vihar_demo",
+  "name": "Anand Vihar ISBT vicinity",
+  "district_id": null,
+  "purposes": [
+   "ACTION"
+  ],
+  "latest_zone_version_id": "zonev_action_anand_vihar_demo_1",
+  "anchor_state": "UNVERIFIED",
+  "verified_anchor_count": null,
+  "display_label": "Fully synthetic demonstration — no verified observed anchors in this zone",
+  "observation_grade_wording_allowed": false,
+  "geometry_status": "PLACEHOLDER",
+  "flagship_status": "NOT_FLAGSHIP",
+  "scenario_case_id": "S02",
+  "route_version_ids": []
+ },
+ {
+  "zone_id": "action_zone_rohini_outer_ring_road_demo",
+  "name": "Rohini Outer Ring Road stretch",
+  "district_id": null,
+  "purposes": [
+   "ACTION"
+  ],
+  "latest_zone_version_id": "zonev_action_rohini_outer_ring_road_demo_1",
+  "anchor_state": "UNVERIFIED",
+  "verified_anchor_count": null,
+  "display_label": "Fully synthetic demonstration — no verified observed anchors in this zone",
+  "observation_grade_wording_allowed": false,
+  "geometry_status": "PLACEHOLDER",
+  "flagship_status": "NOT_FLAGSHIP",
+  "scenario_case_id": "S03",
+  "route_version_ids": []
+ },
+ {
+  "zone_id": "action_zone_wazirpur_industrial_approach_demo",
+  "name": "Wazirpur industrial area approach",
+  "district_id": null,
+  "purposes": [
+   "ACTION"
+  ],
+  "latest_zone_version_id": "zonev_action_wazirpur_industrial_approach_demo_1",
+  "anchor_state": "UNVERIFIED",
+  "verified_anchor_count": null,
+  "display_label": "Fully synthetic demonstration — no verified observed anchors in this zone",
+  "observation_grade_wording_allowed": false,
+  "geometry_status": "PLACEHOLDER",
+  "flagship_status": "NOT_FLAGSHIP",
+  "scenario_case_id": "S04",
+  "route_version_ids": []
+ },
+ {
+  "zone_id": "action_zone_mundka_nangloi_road_demo",
+  "name": "Mundka–Nangloi road",
+  "district_id": null,
+  "purposes": [
+   "ACTION"
+  ],
+  "latest_zone_version_id": "zonev_action_mundka_nangloi_road_demo_1",
+  "anchor_state": "UNVERIFIED",
+  "verified_anchor_count": null,
+  "display_label": "Fully synthetic demonstration — no verified observed anchors in this zone",
+  "observation_grade_wording_allowed": false,
+  "geometry_status": "PLACEHOLDER",
+  "flagship_status": "NOT_FLAGSHIP",
+  "scenario_case_id": "S05",
+  "route_version_ids": []
+ },
+ {
+  "zone_id": "action_zone_punjabi_bagh_ring_road_demo",
+  "name": "Punjabi Bagh Ring Road stretch",
+  "district_id": null,
+  "purposes": [
+   "ACTION"
+  ],
+  "latest_zone_version_id": "zonev_action_punjabi_bagh_ring_road_demo_1",
+  "anchor_state": "UNVERIFIED",
+  "verified_anchor_count": null,
+  "display_label": "Fully synthetic demonstration — no verified observed anchors in this zone",
+  "observation_grade_wording_allowed": false,
+  "geometry_status": "PLACEHOLDER",
+  "flagship_status": "NOT_FLAGSHIP",
+  "scenario_case_id": "S06",
+  "route_version_ids": []
+ },
+ {
+  "zone_id": "action_zone_okhla_phase_2_approach_demo",
+  "name": "Okhla Phase II approach",
+  "district_id": null,
+  "purposes": [
+   "ACTION"
+  ],
+  "latest_zone_version_id": "zonev_action_okhla_phase_2_approach_demo_1",
+  "anchor_state": "UNVERIFIED",
+  "verified_anchor_count": null,
+  "display_label": "Fully synthetic demonstration — no verified observed anchors in this zone",
+  "observation_grade_wording_allowed": false,
+  "geometry_status": "PLACEHOLDER",
+  "flagship_status": "NOT_FLAGSHIP",
+  "scenario_case_id": "S07",
+  "route_version_ids": []
+ },
+ {
+  "zone_id": "action_zone_narela_bawana_road_demo",
+  "name": "Narela–Bawana road",
+  "district_id": null,
+  "purposes": [
+   "ACTION"
+  ],
+  "latest_zone_version_id": "zonev_action_narela_bawana_road_demo_1",
+  "anchor_state": "UNVERIFIED",
+  "verified_anchor_count": null,
+  "display_label": "Fully synthetic demonstration — no verified observed anchors in this zone",
+  "observation_grade_wording_allowed": false,
+  "geometry_status": "PLACEHOLDER",
+  "flagship_status": "NOT_FLAGSHIP",
+  "scenario_case_id": "S08",
+  "route_version_ids": []
+ },
+ {
+  "zone_id": "action_zone_jahangirpuri_gt_karnal_road_demo",
+  "name": "Jahangirpuri GT Karnal Road stretch",
+  "district_id": null,
+  "purposes": [
+   "ACTION"
+  ],
+  "latest_zone_version_id": "zonev_action_jahangirpuri_gt_karnal_road_demo_1",
+  "anchor_state": "UNVERIFIED",
+  "verified_anchor_count": null,
+  "display_label": "Fully synthetic demonstration — no verified observed anchors in this zone",
+  "observation_grade_wording_allowed": false,
+  "geometry_status": "PLACEHOLDER",
+  "flagship_status": "NOT_FLAGSHIP",
+  "scenario_case_id": "S09",
+  "route_version_ids": []
+ },
+ {
+  "zone_id": "action_zone_ito_vikas_marg_demo",
+  "name": "ITO–Vikas Marg stretch",
+  "district_id": null,
+  "purposes": [
+   "ACTION"
+  ],
+  "latest_zone_version_id": "zonev_action_ito_vikas_marg_demo_1",
+  "anchor_state": "UNVERIFIED",
+  "verified_anchor_count": null,
+  "display_label": "Fully synthetic demonstration — no verified observed anchors in this zone",
+  "observation_grade_wording_allowed": false,
+  "geometry_status": "PLACEHOLDER",
+  "flagship_status": "NOT_FLAGSHIP",
+  "scenario_case_id": "S10",
+  "route_version_ids": []
+ },
+ {
+  "zone_id": "action_zone_vivek_vihar_patparganj_approach_demo",
+  "name": "Vivek Vihar–Patparganj industrial approach",
+  "district_id": null,
+  "purposes": [
+   "ACTION"
+  ],
+  "latest_zone_version_id": "zonev_action_vivek_vihar_patparganj_approach_demo_1",
+  "anchor_state": "UNVERIFIED",
+  "verified_anchor_count": null,
+  "display_label": "Fully synthetic demonstration — no verified observed anchors in this zone",
+  "observation_grade_wording_allowed": false,
+  "geometry_status": "PLACEHOLDER",
+  "flagship_status": "NOT_FLAGSHIP",
+  "scenario_case_id": "S11",
+  "route_version_ids": []
+ },
+ {
+  "zone_id": "action_zone_sarai_kale_khan_ring_road_demo",
+  "name": "Sarai Kale Khan–Ring Road stretch",
+  "district_id": null,
+  "purposes": [
+   "ACTION"
+  ],
+  "latest_zone_version_id": "zonev_action_sarai_kale_khan_ring_road_demo_1",
+  "anchor_state": "UNVERIFIED",
+  "verified_anchor_count": null,
+  "display_label": "Fully synthetic demonstration — no verified observed anchors in this zone",
+  "observation_grade_wording_allowed": false,
+  "geometry_status": "PLACEHOLDER",
+  "flagship_status": "NOT_FLAGSHIP",
+  "scenario_case_id": "S12",
+  "route_version_ids": []
+ }
+]

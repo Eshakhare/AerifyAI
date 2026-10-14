@@ -1,0 +1,128 @@
+{
+  "catalog_id": "scenario_catalog_v1",
+  "version": "1.0.0",
+  "catalog_version": "scenario_catalog_v1",
+  "description": "Standard scenario catalog for Aerify AI municipal interventions in Delhi NCT",
+  "cases": [
+    {
+      "case_id": "S01",
+      "scenario_id": "water_suppression_sustained_01",
+      "design_intent": "SUSTAINED_RESPONSE",
+      "action_type": "water_suppression",
+      "candidate_zone": "Palam–Dwarka corridor",
+      "candidate_zone_id": "action_zone_palam_dwarka_demo",
+      "target_metric": "PM10_MASS",
+      "description": "Flagship candidate: sustained water suppression response along Palam–Dwarka arterial corridor"
+    },
+    {
+      "case_id": "S02",
+      "scenario_id": "water_suppression_sustained_02",
+      "design_intent": "SUSTAINED_RESPONSE",
+      "action_type": "water_suppression",
+      "candidate_zone": "Anand Vihar ISBT vicinity",
+      "candidate_zone_id": "action_zone_anand_vihar_demo",
+      "target_metric": "PM10_MASS",
+      "description": "Anchored synthetic intervention: sustained water misting suppression near Anand Vihar ISBT hotspot"
+    },
+    {
+      "case_id": "S03",
+      "scenario_id": "water_suppression_rapid_decay_01",
+      "design_intent": "RAPID_DECAY",
+      "action_type": "water_suppression",
+      "candidate_zone": "Rohini Outer Ring Road stretch",
+      "candidate_zone_id": "action_zone_rohini_outer_ring_road_demo",
+      "target_metric": "PM10_MASS",
+      "description": "High traffic corridor test: rapid suppression decay due to high-speed vehicle wake dust resuspension"
+    },
+    {
+      "case_id": "S04",
+      "scenario_id": "water_suppression_low_dosage_01",
+      "design_intent": "LOW_DOSAGE",
+      "action_type": "water_suppression",
+      "candidate_zone": "Wazirpur industrial area approach",
+      "candidate_zone_id": "action_zone_wazirpur_industrial_approach_demo",
+      "target_metric": "PM2_5_MASS",
+      "description": "Industrial boundary zone: sub-threshold misting volume demonstrating minimal measurable effect"
+    },
+    {
+      "case_id": "S05",
+      "scenario_id": "mechanical_sweeping_sustained_01",
+      "design_intent": "SUSTAINED_RESPONSE",
+      "action_type": "road_sweeping",
+      "candidate_zone": "Mundka–Nangloi road",
+      "candidate_zone_id": "action_zone_mundka_nangloi_road_demo",
+      "target_metric": "PM10_MASS",
+      "description": "Mechanical road sweeping and silt removal trial on heavily silted arterial corridor"
+    },
+    {
+      "case_id": "S06",
+      "scenario_id": "mechanical_sweeping_rapid_decay_01",
+      "design_intent": "RAPID_DECAY",
+      "action_type": "road_sweeping",
+      "candidate_zone": "Punjabi Bagh Ring Road stretch",
+      "candidate_zone_id": "action_zone_punjabi_bagh_ring_road_demo",
+      "target_metric": "PM10_MASS",
+      "description": "Sweeping intervention on mixed commercial/ring road with rapid dust re-accumulation"
+    },
+    {
+      "case_id": "S07",
+      "scenario_id": "smog_gun_targeted_01",
+      "design_intent": "TARGETED_SUPPRESSION",
+      "action_type": "anti_smog_gun",
+      "candidate_zone": "Okhla Phase II approach",
+      "candidate_zone_id": "action_zone_okhla_phase_2_approach_demo",
+      "target_metric": "PM2_5_MASS",
+      "description": "Stationary anti-smog gun deployment at industrial gateway intersection"
+    },
+    {
+      "case_id": "S08",
+      "scenario_id": "smog_gun_continuous_01",
+      "design_intent": "CONTINUOUS_SUPPRESSION",
+      "action_type": "anti_smog_gun",
+      "candidate_zone": "Narela–Bawana road",
+      "candidate_zone_id": "action_zone_narela_bawana_road_demo",
+      "target_metric": "PM10_MASS",
+      "description": "Multi-point mobile mist cannon deployment along unpaved shoulder freight route"
+    },
+    {
+      "case_id": "S09",
+      "scenario_id": "water_suppression_delayed_onset_01",
+      "design_intent": "DELAYED_ONSET",
+      "action_type": "water_suppression",
+      "candidate_zone": "Jahangirpuri GT Karnal Road stretch",
+      "candidate_zone_id": "action_zone_jahangirpuri_gt_karnal_road_demo",
+      "target_metric": "PM10_MASS",
+      "description": "Delayed onset profile with progressive wetting across heavy transport artery"
+    },
+    {
+      "case_id": "S10",
+      "scenario_id": "water_suppression_confounded_rain_01",
+      "design_intent": "CONFOUNDED_RAIN",
+      "action_type": "water_suppression",
+      "candidate_zone": "ITO–Vikas Marg stretch",
+      "candidate_zone_id": "action_zone_ito_vikas_marg_demo",
+      "target_metric": "PM2_5_MASS",
+      "description": "Confounded case: unforecast precipitation (1.2 mm/h) invalidates pre/post comparison"
+    },
+    {
+      "case_id": "S11",
+      "scenario_id": "water_suppression_wind_shift_01",
+      "design_intent": "CONFOUNDED_WIND",
+      "action_type": "water_suppression",
+      "candidate_zone": "Vivek Vihar–Patparganj industrial approach",
+      "candidate_zone_id": "action_zone_vivek_vihar_patparganj_approach_demo",
+      "target_metric": "PM2_5_MASS",
+      "description": "Meteorological shift case: 120° wind direction rotation confounds downwind reference area"
+    },
+    {
+      "case_id": "S12",
+      "scenario_id": "water_suppression_confounded_overlap_01",
+      "design_intent": "CONFOUNDED_ACTION_OVERLAP",
+      "action_type": "water_suppression",
+      "candidate_zone": "Sarai Kale Khan–Ring Road stretch",
+      "candidate_zone_id": "action_zone_sarai_kale_khan_ring_road_demo",
+      "target_metric": "PM10_MASS",
+      "description": "Multi-action contamination case: overlapping unscheduled road sweeping (aux_road_sweep_for_S12) interferes with evaluation"
+    }
+  ]
+}
