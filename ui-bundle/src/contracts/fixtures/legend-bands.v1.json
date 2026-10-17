@@ -1,206 +1,62 @@
 [
   {
-    "id": "cpcb_aqi_v1",
-    "version": "1.0.0",
-    "metric": "AQI",
-    "unit": "index",
-    "kind": "official_aqi",
-    "boundary_rule": "upper_inclusive",
-    "reference_averaging_window": "24h",
-    "bands": [
-      {
-        "band_id": "GOOD",
-        "label": "Good",
-        "min_value": 0,
-        "max_value": 50,
-        "severity_rank": 1,
-        "description": "Minimal impact",
-        "color_hint": "#10b981"
-      },
-      {
-        "band_id": "SATISFACTORY",
-        "label": "Satisfactory",
-        "min_value": 51,
-        "max_value": 100,
-        "severity_rank": 2,
-        "description": "Minor breathing discomfort to sensitive people",
-        "color_hint": "#84cc16"
-      },
-      {
-        "band_id": "MODERATE",
-        "label": "Moderate",
-        "min_value": 101,
-        "max_value": 200,
-        "severity_rank": 3,
-        "description": "Breathing discomfort to people with lungs, asthma and heart diseases",
-        "color_hint": "#eab308"
-      },
-      {
-        "band_id": "POOR",
-        "label": "Poor",
-        "min_value": 201,
-        "max_value": 300,
-        "severity_rank": 4,
-        "description": "Breathing discomfort to most people on prolonged exposure",
-        "color_hint": "#f97316"
-      },
-      {
-        "band_id": "VERY_POOR",
-        "label": "Very Poor",
-        "min_value": 301,
-        "max_value": 400,
-        "severity_rank": 5,
-        "description": "Respiratory illness on prolonged exposure",
-        "color_hint": "#ef4444"
-      },
-      {
-        "band_id": "SEVERE",
-        "label": "Severe",
-        "min_value": 401,
-        "max_value": 500,
-        "severity_rank": 6,
-        "description": "Affects healthy people and seriously impacts those with existing diseases",
-        "color_hint": "#991b1b"
-      }
-    ],
-    "notice": "Official CPCB AQI is computed from at least 3 pollutants with 24-hr averaging where either PM2.5 or PM10 is mandatorily present.",
-    "source_citation": "CPCB National Air Quality Index Standard (MoEFCC, 2014)",
-    "verification_status": "OFFICIAL_REGULATORY"
-  },
-  {
     "id": "cpcb_pm25_conc_v1",
-    "version": "1.0.0",
+    "version": "1",
     "metric": "PM2_5_MASS",
     "unit": "ug/m3",
     "kind": "concentration_band",
     "boundary_rule": "upper_inclusive",
     "reference_averaging_window": "24h",
     "bands": [
-      {
-        "band_id": "GOOD",
-        "label": "Good",
-        "min_value": 0,
-        "max_value": 30,
-        "severity_rank": 1,
-        "description": "0 to 30 µg/m³",
-        "color_hint": "#10b981"
-      },
-      {
-        "band_id": "SATISFACTORY",
-        "label": "Satisfactory",
-        "min_value": 31,
-        "max_value": 60,
-        "severity_rank": 2,
-        "description": "31 to 60 µg/m³",
-        "color_hint": "#84cc16"
-      },
-      {
-        "band_id": "MODERATE",
-        "label": "Moderate",
-        "min_value": 61,
-        "max_value": 90,
-        "severity_rank": 3,
-        "description": "61 to 90 µg/m³",
-        "color_hint": "#eab308"
-      },
-      {
-        "band_id": "POOR",
-        "label": "Poor",
-        "min_value": 91,
-        "max_value": 120,
-        "severity_rank": 4,
-        "description": "91 to 120 µg/m³",
-        "color_hint": "#f97316"
-      },
-      {
-        "band_id": "VERY_POOR",
-        "label": "Very Poor",
-        "min_value": 121,
-        "max_value": 250,
-        "severity_rank": 5,
-        "description": "121 to 250 µg/m³",
-        "color_hint": "#ef4444"
-      },
-      {
-        "band_id": "SEVERE",
-        "label": "Severe",
-        "min_value": 251,
-        "max_value": 500,
-        "severity_rank": 6,
-        "description": "Above 250 µg/m³",
-        "color_hint": "#991b1b"
-      }
+      {"id": "GOOD", "label": "Good", "severity_rank": 0, "lower_bound": 0, "upper_bound": 30},
+      {"id": "SATISFACTORY", "label": "Satisfactory", "severity_rank": 1, "lower_bound": 30, "upper_bound": 60},
+      {"id": "MODERATE", "label": "Moderate", "severity_rank": 2, "lower_bound": 60, "upper_bound": 90},
+      {"id": "POOR", "label": "Poor", "severity_rank": 3, "lower_bound": 90, "upper_bound": 120},
+      {"id": "VERY_POOR", "label": "Very poor", "severity_rank": 4, "lower_bound": 120, "upper_bound": 250},
+      {"id": "SEVERE", "label": "Severe", "severity_rank": 5, "lower_bound": 250, "upper_bound": null}
     ],
-    "notice": "CPCB 24-hr PM2.5 Breakpoints used for sub-index determination.",
-    "source_citation": "CPCB National Ambient Air Quality Standards & NAQI",
-    "verification_status": "OFFICIAL_REGULATORY"
+    "notice": "Colour bands apply CPCB breakpoint ranges to PM2.5 mass concentration for display only. This is not an AQI, and the aggregation window may be shorter than the 24-hour CPCB basis.",
+    "source_citation": "CPCB National AQI sub-index breakpoints, PM2.5 (https://airquality.cpcb.gov.in/ccr_docs/How_AQI_Calculated.pdf)",
+    "verification_status": "pending_source_check"
   },
   {
     "id": "cpcb_pm10_conc_v1",
-    "version": "1.0.0",
+    "version": "1",
     "metric": "PM10_MASS",
     "unit": "ug/m3",
     "kind": "concentration_band",
     "boundary_rule": "upper_inclusive",
     "reference_averaging_window": "24h",
     "bands": [
-      {
-        "band_id": "GOOD",
-        "label": "Good",
-        "min_value": 0,
-        "max_value": 50,
-        "severity_rank": 1,
-        "description": "0 to 50 µg/m³",
-        "color_hint": "#10b981"
-      },
-      {
-        "band_id": "SATISFACTORY",
-        "label": "Satisfactory",
-        "min_value": 51,
-        "max_value": 100,
-        "severity_rank": 2,
-        "description": "51 to 100 µg/m³",
-        "color_hint": "#84cc16"
-      },
-      {
-        "band_id": "MODERATE",
-        "label": "Moderate",
-        "min_value": 101,
-        "max_value": 250,
-        "severity_rank": 3,
-        "description": "101 to 250 µg/m³",
-        "color_hint": "#eab308"
-      },
-      {
-        "band_id": "POOR",
-        "label": "Poor",
-        "min_value": 251,
-        "max_value": 350,
-        "severity_rank": 4,
-        "description": "251 to 350 µg/m³",
-        "color_hint": "#f97316"
-      },
-      {
-        "band_id": "VERY_POOR",
-        "label": "Very Poor",
-        "min_value": 351,
-        "max_value": 430,
-        "severity_rank": 5,
-        "description": "351 to 430 µg/m³",
-        "color_hint": "#ef4444"
-      },
-      {
-        "band_id": "SEVERE",
-        "label": "Severe",
-        "min_value": 431,
-        "max_value": 500,
-        "severity_rank": 6,
-        "description": "Above 430 µg/m³",
-        "color_hint": "#991b1b"
-      }
+      {"id": "GOOD", "label": "Good", "severity_rank": 0, "lower_bound": 0, "upper_bound": 50},
+      {"id": "SATISFACTORY", "label": "Satisfactory", "severity_rank": 1, "lower_bound": 50, "upper_bound": 100},
+      {"id": "MODERATE", "label": "Moderate", "severity_rank": 2, "lower_bound": 100, "upper_bound": 250},
+      {"id": "POOR", "label": "Poor", "severity_rank": 3, "lower_bound": 250, "upper_bound": 350},
+      {"id": "VERY_POOR", "label": "Very poor", "severity_rank": 4, "lower_bound": 350, "upper_bound": 430},
+      {"id": "SEVERE", "label": "Severe", "severity_rank": 5, "lower_bound": 430, "upper_bound": null}
     ],
-    "notice": "CPCB 24-hr PM10 Breakpoints used for sub-index determination.",
-    "source_citation": "CPCB National Ambient Air Quality Standards & NAQI",
-    "verification_status": "OFFICIAL_REGULATORY"
+    "notice": "Colour bands apply CPCB breakpoint ranges to PM10 mass concentration for display only. This is not an AQI, and the aggregation window may be shorter than the 24-hour CPCB basis.",
+    "source_citation": "CPCB National AQI sub-index breakpoints, PM10 (https://airquality.cpcb.gov.in/ccr_docs/How_AQI_Calculated.pdf)",
+    "verification_status": "pending_source_check"
+  },
+  {
+    "id": "cpcb_aqi_v1",
+    "version": "1",
+    "metric": "INDIAN_AQI",
+    "unit": "aqi",
+    "kind": "official_aqi",
+    "boundary_rule": "upper_inclusive",
+    "reference_averaging_window": "24h",
+    "bands": [
+      {"id": "GOOD", "label": "Good", "severity_rank": 0, "lower_bound": 0, "upper_bound": 50},
+      {"id": "SATISFACTORY", "label": "Satisfactory", "severity_rank": 1, "lower_bound": 50, "upper_bound": 100},
+      {"id": "MODERATE", "label": "Moderate", "severity_rank": 2, "lower_bound": 100, "upper_bound": 200},
+      {"id": "POOR", "label": "Poor", "severity_rank": 3, "lower_bound": 200, "upper_bound": 300},
+      {"id": "VERY_POOR", "label": "Very poor", "severity_rank": 4, "lower_bound": 300, "upper_bound": 400},
+      {"id": "SEVERE", "label": "Severe", "severity_rank": 5, "lower_bound": 400, "upper_bound": null}
+    ],
+    "notice": "Official station AQI category as received from the source. It is a station or city value, not a street-level measurement.",
+    "source_citation": "CPCB National AQI categories (https://airquality.cpcb.gov.in/ccr_docs/How_AQI_Calculated.pdf)",
+    "verification_status": "pending_source_check"
   }
 ]

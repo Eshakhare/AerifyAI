@@ -1,7 +1,7 @@
-# Aerify AI architecture handoff (Revision 0.9)
+# Aerify AI architecture handoff (Revision 0.11)
 
 
-**Architecture & Schema Version:** `0.9` — Updated **11 October 2026** (includes the six UI-driven gap closures, Gemini 2.5 Flash-Lite on Vertex AI cost controls, demo-core scope tiers, task execution order, route-entity change set, and reviewer gaps B1–B8).
+**Architecture Version:** `0.11` | **Schema Version:** `0.9` — Updated **18 October 2026** (incorporates Google Maps Platform integration, Near You permission query, Municipal Action Center Cloud SQL persistence & checkpoint timeline, clean Google Auth, and Gemini 2.5 summary ID purge with industrial factor analysis).
 
 
 Aerify AI's Delhi demo uses a hybrid evidence model: real historical bus/station PM observations, regional weather and satellite context, nearby industrial/source geography and deterministic synthetic local/post-action data. All records preserve provenance, time, spatial support and units. Synthetic scenario projections stay separate from future evaluations based on observed pre/post data.
@@ -53,6 +53,7 @@ The architecture in `docs/architecture.md` is the team's shared base, kept in th
 | `data/scenarios/scenario-catalog.v1.json` | The accepted 12 scenario cases (generator input). |
 | `contracts/tools/validate_contracts.py` | Executable contract gate for all of the above. |
 | `docs/architecture.md` | Scope tiers, task execution order, change management, data fusion, scenario engine, maps, APIs, services and AI boundaries. |
+| `docs/CHANGES.md` | Consolidated record of all user-driven enhancements, refactorings, and architectural migrations across versions. |
 | `docs/role-prompts.md` | Paste-ready task instructions for the four workstreams; task-based, not person-based. |
 | `docs/pricing.md` | Deployment estimates and cost controls. |
 
@@ -80,3 +81,5 @@ All files under `contracts/fixtures/` are executable examples, not additional so
 | --- | --- |
 | **0.8** | - Architecture created |
 | **0.9** | - Added weather and satellite context metadata (`ContextDescriptor`) and `/v1/public/locations/{id}/context` endpoint<br>- Changed `confounders` from plain text to structured objects (`ConfounderFinding`)<br>- Added fixed 12-scenario catalog (`S01`–`S12` in `scenario-catalog.v1.json`)<br>- Kept user roles (`PUBLIC`, `OFFICER`, `SUPERVISOR`) in Cloud SQL `app_users` (Firebase Auth for sign-in only) and added `/v1/me`<br>- Moved map category and AQI/PM threshold bands to the server (`legend-bands.v1.json` and `/v1/public/legends`)<br>- Added zone summary endpoint (`/v1/public/zones`), Palam–Dwarka placeholder fixture, and canonical `sha256:` geometry hash rule<br>- Pinned Vertex AI to **`gemini-2.5-flash-lite`** via Cloud Run service account (no API key) with billing spend cap and daily call limits<br>- Added `validate_contracts.py` to check all schemas, fixtures, legends, and scenarios |
+| **0.10** | - Added Government Clean Air Actions & Directives Registry to public/officer outcomes experience with Pre vs Post AQI comparisons<br>- Added live civic status widgets for Delhi Odd-Even Vehicle Rationing Scheme (plate rules, fine, hours) and Delhi 24x7 Green War Room / AI Command Center<br>- Added stable scientific notice states for unmeasured actions (data gaps) and weather-confounded events (rain scavenging)<br>- Formatted 3-tier action badges (`VERIFIED_IMPACT`, `CONFOUNDED`, `UNMEASURED`, `POLICY_ACTIVE`, `CIVIC_INFRASTRUCTURE`)<br>- Decomposed Vertex AI GenAI layer into 3 specialized, cached narrative agents: `aerify-hotspot-agent`, `aerify-simulation-agent`, and `aerify-audit-agent` |
+| **0.11** | - Integrated Google Maps Platform (`@vis.gl/react-google-maps`) with dynamic multi-layer styling, satellite/terrain view, and 11 Delhi administrative districts GeoJSON overlay.<br>- Added Near You location permission query (`navigator.permissions.query`) with silent auto-load on refresh when granted, plus localStorage fallback caching.<br>- Reorganized portal into 3 core pillars (Air Quality Dashboard, Govt Actions & Impact, Municipal Action Center) and retired redundant action simulations menu.<br>- Enabled Cloud SQL database persistence for municipal operations (`actions` table) with interactive `[Mark as Done]` status transitions and automated +3h, +6h, +12h, +24h checkpoint timeline measurement scheduling.<br>- Purged internal database IDs and technical enum constants from Gemini 2.5 Flash-Lite executive narratives; added upwind/downwind industrial/transit factor analysis within 1km/3km radii.<br>- Streamlined authentication with standard Firebase "Login with Google" button and removed municipal directory credentials list. |

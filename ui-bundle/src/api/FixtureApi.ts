@@ -10,6 +10,8 @@
 import { ApiClient } from './ApiClient';
 import {
   ActionOverlapAssessment,
+  AgentNarrativeResponse,
+  AgentType,
   BandId,
   CameraEvent,
   Capability,
@@ -21,6 +23,7 @@ import {
   Legend,
   LocationContext,
   MapAggregate,
+  Measurement,
   Metric,
   NearbySummary,
   PublicInterventionResponse,
@@ -180,7 +183,9 @@ export class FixtureApi implements ApiClient {
   public async getLegends(metric?: Metric): Promise<Legend[]> {
     const legends = legendBandsFixture as unknown as Legend[];
     if (metric) {
-      return legends.filter((l) => l.metric === metric);
+      const normalized = metric === 'AQI' ? 'INDIAN_AQI' : metric;
+      const filtered = legends.filter((l) => l.metric === normalized);
+      return filtered.length > 0 ? filtered : legends;
     }
     return legends;
   }
@@ -783,17 +788,15 @@ export class FixtureApi implements ApiClient {
 
   // MOCK-NOT-IN-FIXTURES: One NearbySummary row strictly schema-0.9 valid
   public async getNearby(position: GeoPoint): Promise<NearbySummary> {
+    const obs = observationFixture as unknown as Measurement;
+    const ctx = locationContextFixture as unknown as LocationContext;
+    const cities = await this.getCityOverview('PM2_5_MASS');
     return {
-      schema_version: '0.9',
-      clock: this.interventionState.clock,
-      position,
-      radius_m: 3000,
-      active_hotspots_count: 2,
-      active_interventions_count: 1,
-      direct_stations_count: 1,
-      nearest_station_name: 'Anand Vihar, Delhi - CPCB Regulatory Station',
-      nearest_station_distance_m: 850,
-      current_air_quality_summary: 'Severe dust resuspension and heavy diesel transit influence within 1 km corridor.'
+      requested_position: position,
+      nearest_road_observation: obs,
+      nearest_station: obs,
+      regional_model: ctx.air_quality_model?.[0] || null,
+      nearby_cities: cities.slice(0, 3)
     };
   }
 
@@ -1045,6 +1048,10 @@ export class FixtureApi implements ApiClient {
     return null;
   }
 
+  public async listInterventions(): Promise<PublicInterventionResponse[]> {
+    return [this.interventionState];
+  }
+
   public async listZones(purpose?: string, districtId?: string): Promise<ZoneSummary[]> {
     let zones = this.zoneSummaries;
     if (purpose) {
@@ -1162,5 +1169,97 @@ export class FixtureApi implements ApiClient {
 
   public async getCameraEvent(id: string): Promise<CameraEvent | null> {
     return this.cameraEvents.find((e) => e.id === id) || this.cameraEvents[0] || null;
+  }
+
+  public async getNarrative(agentType: AgentType, targetId: string): Promise<AgentNarrativeResponse> {
+    const agentMap: Record<AgentType, { id: string; state: EvidenceState }> = {
+      hotspot: { id: 'aerify-hotspot-agent', state: 'DIRECTLY_OBSERVED' },
+      simulation: { id: 'aerify-simulation-agent', state: 'SYNTHETIC' },
+      audit: { id: 'aerify-audit-agent', state: 'DIRECTLY_OBSERVED' }
+    };
+    const meta = agentMap[agentType];
+    return {
+      agent_id: meta.id,
+      agent_type: agentType,
+      target_id: targetId,
+      model_id: 'gemini-2.5-flash-lite',
+      evidence_state: meta.state,
+      summary: `Vertex AI (${meta.id}) diagnostic for ${targetId}: Grounded in governed Gold SQL views with strict separation between 250 m street observations and regional context.`,
+      evidence_bullets: [
+        `Target entity: ${targetId} evaluated under Schema 0.9 contract`,
+        'Policy version: water_suppression_demo_policy_v1 (rain >= 0.5 mm/h, wind delta >= 2.0 m/s)',
+        'Difference-in-Differences compares action corridor against pre-frozen reference corridor'
+      ],
+      confounder_disclosure: 'Meteorological and multi-action overlap gates checked prior to attribution.',
+      governance_caveat:
+        meta.state === 'SYNTHETIC'
+          ? 'Synthetic demonstration. Projections do not describe a real government intervention.'
+          : 'Reports observed association relative to a matched reference corridor, never causal proof.',
+      generated_at: this.interventionState.clock.effective_now,
+      is_fallback: false,
+      cached: true
+    };
+  }
+
+  public async loginWithCloudSql(payload: {
+    email?: string;
+    firebase_uid?: string;
+    display_name?: string;
+    requested_role?: Role;
+  }): Promise<SessionInfo> {
+    const role: Role =
+      payload.requested_role ||
+      (payload.email?.includes('dpcc') || payload.email?.includes('supervisor') ? 'SUPERVISOR' : 'OFFICER');
+    this.setFixtureRole(role);
+    const me = await this.getMe();
+    return {
+      ...me,
+      auth_mode: 'FIREBASE',
+      display_name: payload.display_name || payload.email || me.display_name,
+      user: {
+        firebase_uid: payload.firebase_uid || `uid_${payload.email || role.toLowerCase()}`,
+        email: payload.email || `${role.toLowerCase()}@mcd.delhi.gov.in`,
+        role,
+        active: true,
+        actor_ref: `actor_${role.toLowerCase()}_01`,
+        display_name: payload.display_name || me.display_name,
+        department:
+          role === 'SUPERVISOR'
+            ? 'Delhi Pollution Control Committee (DPCC)'
+            : 'Municipal Corporation of Delhi (MCD)'
+      }
+    };
+  }
+
+  public async listCloudSqlUsers() {
+    return [
+      {
+        firebase_uid: 'uid_esha_khare_mcd',
+        email: 'esha.khare@mcd.delhi.gov.in',
+        role: 'OFFICER' as Role,
+        active: true,
+        actor_ref: 'actor_mcd_officer_esha',
+        display_name: 'Esha Khare — MCD Field Officer',
+        department: 'Municipal Corporation of Delhi (MCD)'
+      },
+      {
+        firebase_uid: 'supervisor@dpcc.delhi.gov.in',
+        email: 'supervisor@dpcc.delhi.gov.in',
+        role: 'SUPERVISOR' as Role,
+        active: true,
+        actor_ref: 'actor_dpcc_supervisor_02',
+        display_name: 'DPCC Senior Oversight Supervisor',
+        department: 'Delhi Pollution Control Committee (DPCC)'
+      },
+      {
+        firebase_uid: 'demo_public_uid',
+        email: 'citizen@delhi.in',
+        role: 'PUBLIC' as Role,
+        active: true,
+        actor_ref: 'actor_public_citizen',
+        display_name: 'Public Citizen Viewer',
+        department: 'Citizen Portal'
+      }
+    ];
   }
 }

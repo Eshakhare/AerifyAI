@@ -114,16 +114,20 @@ export const NearYouView: React.FC<NearYouViewProps> = ({
         {nearby && (
           <div className="flex items-center gap-3 font-mono text-xs flex-wrap">
             <div className="bg-slate-50 p-2.5 rounded-xl border border-slate-200 text-center shadow-xs">
-              <span className="text-slate-500 block text-[10px] uppercase font-semibold">Active Hotspots</span>
-              <span className="text-base font-bold text-amber-700">{nearby.active_hotspots_count}</span>
+              <span className="text-slate-500 block text-[10px] uppercase font-semibold">Road PM2.5</span>
+              <span className="text-base font-bold text-amber-700">
+                {nearby.nearest_road_observation ? `${nearby.nearest_road_observation.value} µg/m³` : 'N/A'}
+              </span>
             </div>
             <div className="bg-slate-50 p-2.5 rounded-xl border border-slate-200 text-center shadow-xs">
-              <span className="text-slate-500 block text-[10px] uppercase font-semibold">Interventions</span>
-              <span className="text-base font-bold text-sky-700">{nearby.active_interventions_count}</span>
+              <span className="text-slate-500 block text-[10px] uppercase font-semibold">Nearby Districts</span>
+              <span className="text-base font-bold text-sky-700">{nearby.nearby_cities.length}</span>
             </div>
             <div className="bg-slate-50 p-2.5 rounded-xl border border-slate-200 text-center shadow-xs">
-              <span className="text-slate-500 block text-[10px] uppercase font-semibold">Station Proximity</span>
-              <span className="text-base font-bold text-emerald-700">{nearby.nearest_station_distance_m}m</span>
+              <span className="text-slate-500 block text-[10px] uppercase font-semibold">Regional Model</span>
+              <span className="text-base font-bold text-emerald-700">
+                {nearby.regional_model ? `${nearby.regional_model.value} µg/m³` : 'Active'}
+              </span>
             </div>
 
             <button
@@ -140,7 +144,9 @@ export const NearYouView: React.FC<NearYouViewProps> = ({
       {nearby && (
         <div className="p-3.5 bg-sky-50 border border-sky-200 rounded-xl text-xs text-sky-950 flex items-center gap-2.5 shadow-xs">
           <Info className="w-4 h-4 text-sky-600 shrink-0" />
-          <span className="font-medium">{nearby.current_air_quality_summary}</span>
+          <span className="font-medium">
+            Requested Position ({nearby.requested_position.lat.toFixed(4)}° N, {nearby.requested_position.lng.toFixed(4)}° E) matched to road segment observation and regional model context.
+          </span>
         </div>
       )}
 

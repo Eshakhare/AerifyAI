@@ -13,8 +13,9 @@ export * from './ApiClient';
 export * from './FixtureApi';
 export * from './HttpApi';
 
-// Determine default client based on environment
-const apiMode = (import.meta.env.VITE_API_MODE || 'FIXTURE').toUpperCase();
+// Determine default client based on environment (defaults to HTTP connected to FastAPI + Cloud SQL)
+const apiMode = (import.meta.env.VITE_API_MODE || 'HTTP').toUpperCase();
 
 export const defaultApiClient: ApiClient =
-  apiMode === 'HTTP' ? new HttpApi() : new FixtureApi();
+  apiMode === 'FIXTURE' ? new FixtureApi() : new HttpApi();
+

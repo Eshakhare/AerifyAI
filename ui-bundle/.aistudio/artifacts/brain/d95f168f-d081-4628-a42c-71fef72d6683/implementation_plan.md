@@ -62,7 +62,7 @@ Refactor Aerify AI into a modern, government-grade civic environmental intellige
 - **Left**: Dynamic breadcrumbs (`Air Quality Dashboard`, `Air Quality Dashboard / South Delhi`, `Officer Action Portal / Propose Intervention`).
 - **Right**:
   - *Public Citizen State*: Prominent "Municipal Officer Sign In" button with shield icon.
-  - *Authenticated State*: User avatar, name ("Rajesh Kumar"), department ("MCD Central Zone"), role pill ("Municipal Officer"), and profile dropdown menu.
+  - *Authenticated State*: User avatar, name ("Esha Khare"), department ("MCD Central Zone"), role pill ("Municipal Officer"), and profile dropdown menu.
   - *Profile Dropdown*:
     1. Active User & Department details.
     2. Interactive Role Switcher (Public Citizen, Municipal Officer, Environmental Supervisor).

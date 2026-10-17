@@ -47,6 +47,7 @@ import { PairedDiffInDiffChart } from '../components/officer/PairedDiffInDiffCha
 import { ConfounderAndOverlapCard } from '../components/officer/ConfounderAndOverlapCard';
 import { SupervisorCorrectionBanner } from '../components/officer/SupervisorCorrectionBanner';
 import { ScenarioProvenanceModal } from '../components/scenarios/ScenarioProvenanceModal';
+import { AgentNarrativeCard } from '../components/shared/AgentNarrativeCard';
 import {
   UiInterventionRevision,
   SCENARIO_GROUPS,
@@ -628,6 +629,14 @@ export const ScenariosView: React.FC<ScenariosViewProps> = ({
                   confounders={currentConfounders}
                   limitations={currentLimitations}
                   overlapAssessment={overlapAssessment}
+                />
+
+                {/* Vertex AI Gemini Counterfactual Simulation Narrative */}
+                <AgentNarrativeCard
+                  apiClient={apiClient}
+                  agentType="simulation"
+                  targetId={selectedScenario.case_id}
+                  title={`Vertex AI Gemini Simulation Brief (Case ${selectedScenario.case_id})`}
                 />
 
                 {/* Mandatory Synthetic Disclaimer */}

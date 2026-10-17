@@ -1,8 +1,8 @@
 {
+  "schema_version": "0.9",
   "catalog_id": "scenario_catalog_v1",
-  "version": "1.0.0",
   "catalog_version": "scenario_catalog_v1",
-  "description": "Standard scenario catalog for Aerify AI municipal interventions in Delhi NCT",
+  "description": "The 12 evaluated water-suppression cases of the 30-day demo.",
   "cases": [
     {
       "case_id": "S01",
@@ -26,78 +26,78 @@
     },
     {
       "case_id": "S03",
-      "scenario_id": "water_suppression_rapid_decay_01",
-      "design_intent": "RAPID_DECAY",
+      "scenario_id": "water_suppression_sustained_03",
+      "design_intent": "SUSTAINED_RESPONSE",
       "action_type": "water_suppression",
       "candidate_zone": "Rohini Outer Ring Road stretch",
       "candidate_zone_id": "action_zone_rohini_outer_ring_road_demo",
       "target_metric": "PM10_MASS",
-      "description": "High traffic corridor test: rapid suppression decay due to high-speed vehicle wake dust resuspension"
+      "description": "Sustained water suppression response along Rohini Outer Ring Road stretch"
     },
     {
       "case_id": "S04",
-      "scenario_id": "water_suppression_low_dosage_01",
-      "design_intent": "LOW_DOSAGE",
+      "scenario_id": "water_suppression_temporary_01",
+      "design_intent": "TEMPORARY_RESPONSE",
       "action_type": "water_suppression",
       "candidate_zone": "Wazirpur industrial area approach",
       "candidate_zone_id": "action_zone_wazirpur_industrial_approach_demo",
-      "target_metric": "PM2_5_MASS",
-      "description": "Industrial boundary zone: sub-threshold misting volume demonstrating minimal measurable effect"
+      "target_metric": "PM10_MASS",
+      "description": "Temporary response profile along Wazirpur industrial area approach"
     },
     {
       "case_id": "S05",
-      "scenario_id": "mechanical_sweeping_sustained_01",
-      "design_intent": "SUSTAINED_RESPONSE",
-      "action_type": "road_sweeping",
+      "scenario_id": "water_suppression_temporary_02",
+      "design_intent": "TEMPORARY_RESPONSE",
+      "action_type": "water_suppression",
       "candidate_zone": "Mundka–Nangloi road",
       "candidate_zone_id": "action_zone_mundka_nangloi_road_demo",
       "target_metric": "PM10_MASS",
-      "description": "Mechanical road sweeping and silt removal trial on heavily silted arterial corridor"
+      "description": "Temporary water suppression response along Mundka–Nangloi road"
     },
     {
       "case_id": "S06",
-      "scenario_id": "mechanical_sweeping_rapid_decay_01",
-      "design_intent": "RAPID_DECAY",
-      "action_type": "road_sweeping",
+      "scenario_id": "water_suppression_temporary_03",
+      "design_intent": "TEMPORARY_RESPONSE",
+      "action_type": "water_suppression",
       "candidate_zone": "Punjabi Bagh Ring Road stretch",
       "candidate_zone_id": "action_zone_punjabi_bagh_ring_road_demo",
       "target_metric": "PM10_MASS",
-      "description": "Sweeping intervention on mixed commercial/ring road with rapid dust re-accumulation"
+      "description": "Temporary suppression response on Punjabi Bagh Ring Road stretch"
     },
     {
       "case_id": "S07",
-      "scenario_id": "smog_gun_targeted_01",
-      "design_intent": "TARGETED_SUPPRESSION",
-      "action_type": "anti_smog_gun",
+      "scenario_id": "water_suppression_no_effect_01",
+      "design_intent": "NO_RESPONSE",
+      "action_type": "water_suppression",
       "candidate_zone": "Okhla Phase II approach",
       "candidate_zone_id": "action_zone_okhla_phase_2_approach_demo",
       "target_metric": "PM2_5_MASS",
-      "description": "Stationary anti-smog gun deployment at industrial gateway intersection"
+      "description": "No measurable change at every checkpoint along Okhla Phase II approach"
     },
     {
       "case_id": "S08",
-      "scenario_id": "smog_gun_continuous_01",
-      "design_intent": "CONTINUOUS_SUPPRESSION",
-      "action_type": "anti_smog_gun",
+      "scenario_id": "water_suppression_no_effect_02",
+      "design_intent": "NO_RESPONSE",
+      "action_type": "water_suppression",
       "candidate_zone": "Narela–Bawana road",
       "candidate_zone_id": "action_zone_narela_bawana_road_demo",
       "target_metric": "PM10_MASS",
-      "description": "Multi-point mobile mist cannon deployment along unpaved shoulder freight route"
+      "description": "No measurable change at every checkpoint along Narela–Bawana road"
     },
     {
       "case_id": "S09",
-      "scenario_id": "water_suppression_delayed_onset_01",
-      "design_intent": "DELAYED_ONSET",
+      "scenario_id": "water_suppression_no_effect_03",
+      "design_intent": "NO_RESPONSE",
       "action_type": "water_suppression",
       "candidate_zone": "Jahangirpuri GT Karnal Road stretch",
       "candidate_zone_id": "action_zone_jahangirpuri_gt_karnal_road_demo",
       "target_metric": "PM10_MASS",
-      "description": "Delayed onset profile with progressive wetting across heavy transport artery"
+      "description": "No measurable change at every checkpoint along Jahangirpuri GT Karnal Road stretch"
     },
     {
       "case_id": "S10",
       "scenario_id": "water_suppression_confounded_rain_01",
-      "design_intent": "CONFOUNDED_RAIN",
+      "design_intent": "RAIN_CONFOUNDER",
       "action_type": "water_suppression",
       "candidate_zone": "ITO–Vikas Marg stretch",
       "candidate_zone_id": "action_zone_ito_vikas_marg_demo",
@@ -106,23 +106,23 @@
     },
     {
       "case_id": "S11",
-      "scenario_id": "water_suppression_wind_shift_01",
-      "design_intent": "CONFOUNDED_WIND",
+      "scenario_id": "water_suppression_confounded_wind_01",
+      "design_intent": "WIND_CONFOUNDER",
       "action_type": "water_suppression",
       "candidate_zone": "Vivek Vihar–Patparganj industrial approach",
       "candidate_zone_id": "action_zone_vivek_vihar_patparganj_approach_demo",
       "target_metric": "PM2_5_MASS",
-      "description": "Meteorological shift case: 120° wind direction rotation confounds downwind reference area"
+      "description": "Meteorological shift case: wind speed and direction shift confounds downwind reference area"
     },
     {
       "case_id": "S12",
       "scenario_id": "water_suppression_confounded_overlap_01",
-      "design_intent": "CONFOUNDED_ACTION_OVERLAP",
+      "design_intent": "ACTION_OVERLAP",
       "action_type": "water_suppression",
       "candidate_zone": "Sarai Kale Khan–Ring Road stretch",
       "candidate_zone_id": "action_zone_sarai_kale_khan_ring_road_demo",
       "target_metric": "PM10_MASS",
-      "description": "Multi-action contamination case: overlapping unscheduled road sweeping (aux_road_sweep_for_S12) interferes with evaluation"
+      "description": "Multi-action contamination case: overlapping road sweeping (aux_road_sweep_for_S12) interferes with evaluation"
     }
   ]
 }

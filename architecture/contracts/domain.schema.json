@@ -194,7 +194,25 @@
            "enum": ["uncalibrated", "suspect_outlier", "humidity_sensitive", "cloud_affected", "stale", "low_coverage", "time_mismatch", "modeled_only", "synthetic_only", "map_match_rejected", "multi_action_contamination"]
          }
        },
-       "provenance": {"$ref": "#/$defs/Provenance"}
+       "provenance": {"$ref": "#/$defs/Provenance"},
+       "pm25_value": {"type": ["number", "null"]},
+       "pm10_value": {"type": ["number", "null"]},
+       "pm1_value": {"type": ["number", "null"]},
+       "no2_value": {"type": ["number", "null"]},
+       "so2_value": {"type": ["number", "null"]},
+       "o3_value": {"type": ["number", "null"]},
+       "co_value": {"type": ["number", "null"]},
+       "indian_aqi": {"type": ["number", "null"]},
+       "us_aqi": {"type": ["number", "null"]},
+       "primary_pollutant": {"type": ["string", "null"]},
+       "cpcb_category": {"type": ["string", "null"]},
+       "station_name": {"type": ["string", "null"]},
+       "bus_id": {"type": ["string", "null"]},
+       "route_id": {"type": ["string", "null"]},
+       "speed_kmh": {"type": ["number", "null"]},
+       "distance_m": {"type": ["number", "null"]},
+       "distance_km": {"type": ["number", "null"]},
+       "within_500m": {"type": ["boolean", "null"]}
      },
      "allOf": [
        {
@@ -276,7 +294,20 @@
        "evidence_state": {"$ref": "#/$defs/EvidenceState"},
        "method_version": {"type": "string", "minLength": 1},
        "provenance_mix": {"type": "array", "items": {"$ref": "#/$defs/Origin"}, "uniqueItems": true},
-       "geometry_ref": {"type": ["string", "null"]}
+       "geometry_ref": {"type": ["string", "null"]},
+       "geometry": {"type": ["object", "null"]},
+       "pm10_value": {"type": ["number", "null"]},
+       "aqi": {"type": ["integer", "number", "null"]},
+       "cpcb_category": {"type": ["string", "null"]},
+       "primary_pollutant": {"type": ["string", "null"]},
+       "pm25_4h_avg": {"type": ["number", "null"]},
+       "pm10_4h_avg": {"type": ["number", "null"]},
+       "pm25_24h_avg": {"type": ["number", "null"]},
+       "pm10_24h_avg": {"type": ["number", "null"]},
+       "sample_count_24h": {"type": ["integer", "null"]},
+       "centroid": {"anyOf": [{"$ref": "#/$defs/GeoPoint"}, {"type": "null"}]},
+       "headquarters": {"type": ["string", "null"]},
+       "weather": {"type": ["object", "null"]}
      },
      "allOf": [
        {
@@ -711,6 +742,10 @@
      "required": ["requested_position", "nearest_road_observation", "nearest_station", "regional_model", "nearby_cities"],
      "properties": {
        "requested_position": {"$ref": "#/$defs/GeoPoint"},
+       "locality_info": {"type": ["object", "null"]},
+       "live_weather": {"type": ["object", "null"]},
+       "live_air_quality": {"type": ["object", "null"]},
+       "district_rolling": {"type": ["object", "null"]},
        "nearest_road_observation": {"anyOf": [{"$ref": "#/$defs/Measurement"}, {"type": "null"}]},
        "nearest_station": {"anyOf": [{"$ref": "#/$defs/Measurement"}, {"type": "null"}]},
        "regional_model": {"anyOf": [{"$ref": "#/$defs/Measurement"}, {"type": "null"}]},
@@ -726,6 +761,8 @@
        "clock": {"$ref": "#/$defs/ClockMetadata"},
        "location_id": {"type": "string", "minLength": 1},
        "requested_position": {"$ref": "#/$defs/GeoPoint"},
+       "live_weather": {"type": ["object", "null"]},
+       "live_air_quality": {"type": ["object", "null"]},
        "weather": {"type": "array", "items": {"$ref": "#/$defs/Measurement"}},
        "satellite": {"type": "array", "items": {"$ref": "#/$defs/Measurement"}},
        "air_quality_model": {"type": "array", "items": {"$ref": "#/$defs/Measurement"}},

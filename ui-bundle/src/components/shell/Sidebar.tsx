@@ -59,35 +59,28 @@ export const Sidebar: React.FC<SidebarProps> = ({
     {
       id: 'dashboard' as NavTab,
       label: 'Air Quality Dashboard',
-      description: 'Near You & Delhi 11-District Map',
+      description: 'Near You & Delhi Map',
       icon: Map,
       visible: true
     },
     {
-      id: 'simulations' as NavTab,
-      label: 'Action Impact Simulations',
-      description: 'S01–S12 Predictive Interventions',
-      icon: FlaskConical,
-      visible: isOfficerOrSupervisor
-    },
-    {
       id: 'evaluations' as NavTab,
-      label: 'Verified Field Outcomes',
-      description: 'Pre/Post Sensor Audit Reports',
+      label: 'Govt Actions & Impact',
+      description: 'Clean Air Directives & Measured Results',
       icon: BarChart3,
       visible: true
     },
     {
       id: 'officer-portal' as NavTab,
-      label: 'Officer Action Portal',
-      description: 'Intervention Dispatch & Tracking',
+      label: 'Municipal Action Center',
+      description: 'Field Operations & Dispatch',
       icon: Shield,
       visible: isOfficerOrSupervisor
     },
     {
       id: 'dev-showcase' as NavTab,
       label: 'Dev Component Showcase',
-      description: 'Contracts, Badges & UI Primitives',
+      description: 'UI Primitives & Badges',
       icon: Code2,
       visible: isDevModeEnabled
     }
@@ -180,9 +173,8 @@ export const Sidebar: React.FC<SidebarProps> = ({
         <ClockWidget clock={clock} />
 
         <div className="space-y-1 text-[10px] text-slate-400 font-medium pt-1 border-t border-slate-800/80">
-          <div className="flex items-center justify-between text-slate-400 font-semibold">
-            <span>Aerify Platform</span>
-            <span className="font-mono text-slate-300">v0.9</span>
+          <div className="flex items-center justify-between text-slate-300 font-bold">
+            <span>Aerify Delhi Civic Portal</span>
           </div>
           <div className="leading-snug">
             Govt of NCT of Delhi / Municipal Clean Air Partnership

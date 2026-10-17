@@ -9,8 +9,13 @@
 
 import {
   ActionOverlapAssessment,
+  AgentNarrativeResponse,
+  AgentType,
+  AppUserRecord,
+  AuthLoginPayload,
   CameraEvent,
   ClockMetadata,
+  DistrictSummaryResponse,
   EvaluationPlan,
   GeoPoint,
   Intervention,
@@ -33,6 +38,7 @@ export interface ApiClient {
   getClock(): Promise<ClockMetadata>;
   getLegends(metric?: Metric): Promise<Legend[]>;
   getCityOverview(metric: Metric): Promise<MapAggregate[]>;
+  getDistrictSummary?(districtId: string): Promise<DistrictSummaryResponse>;
   getDistrictCells(districtId: string, metric: Metric): Promise<MapAggregate[]>;
   getCellRoads(cellId: string, metric: Metric): Promise<MapAggregate[]>;
   getNearby(position: GeoPoint): Promise<NearbySummary>;
@@ -40,6 +46,7 @@ export interface ApiClient {
   listScenarios(): Promise<ScenarioRun[]>;
   getScenario(id: string): Promise<ScenarioRun | null>;
   getIntervention(id: string): Promise<PublicInterventionResponse | null>;
+  listInterventions?(): Promise<PublicInterventionResponse[]>;
   listZones(purpose?: string, districtId?: string): Promise<ZoneSummary[]>;
   getZone(id: string): Promise<ZoneVersion | null>;
   createDraftIntervention(payload: Partial<Intervention>): Promise<Intervention>;
@@ -50,7 +57,11 @@ export interface ApiClient {
   submitCorrection(interventionId: string, notice: string): Promise<PublicInterventionResponse>;
   getOverlapAssessment(id: string): Promise<ActionOverlapAssessment | null>;
   getCameraEvent(id: string): Promise<CameraEvent | null>;
-  
-  // Test/Fixture specific helpers
+  getNarrative?(agentType: AgentType, targetId: string): Promise<AgentNarrativeResponse>;
+
+  // Firebase Auth & Cloud SQL `app_users` RBAC methods
+  loginWithCloudSql?(payload: AuthLoginPayload): Promise<SessionInfo>;
+  listCloudSqlUsers?(): Promise<AppUserRecord[]>;
+  setBearerToken?(token: string | null): void;
   setFixtureRole?(role: Role): void;
 }

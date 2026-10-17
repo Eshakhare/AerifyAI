@@ -17,11 +17,11 @@ import {
   LocationContext,
   SessionInfo
 } from '../contracts/types';
-import { BAND_COLOR_TOKENS } from '../ui/viewModels';
-import { MapLibreMap } from '../components/map/MapLibreMap';
+import { GoogleMapView } from '../components/map/GoogleMapView';
 import { DistrictDetailView } from '../components/map/DistrictDetailView';
 import { NearYouCard } from '../components/map/NearYouCard';
 import { EnvironmentalContextDrawer } from '../components/drawer/EnvironmentalContextDrawer';
+import { BAND_COLOR_TOKENS } from '../ui/viewModels';
 import {
   Compass,
   Layers,
@@ -66,8 +66,8 @@ export const MapView: React.FC<MapViewProps> = ({
         setLoading(true);
         // Load city aggregates & legend
         const [aggsList, legends] = await Promise.all([
-          apiClient.getCityOverview('AQI'),
-          apiClient.getLegends('AQI')
+          apiClient.getCityOverview('INDIAN_AQI'),
+          apiClient.getLegends('INDIAN_AQI')
         ]);
 
         const aggsMap: Record<string, MapAggregate> = {};
@@ -127,12 +127,12 @@ export const MapView: React.FC<MapViewProps> = ({
 
   return (
     <div className="space-y-6">
-      {/* 1. TOP SECTION: Hyper-Local "Near You" Air Card */}
+      {/* 1. TOP SECTION: Hyper-Local "AQI Near You" Air Card */}
       <NearYouCard
         apiClient={apiClient}
         clock={clock}
         session={session}
-        onOpenContextDrawer={(locId) => handleOpenDrawer(locId, 'Hyper-Local Monitored Sector')}
+        onOpenContextDrawer={(locId, locName) => handleOpenDrawer(locId, locName || 'Monitored Sector')}
       />
 
       {/* 2. BOTTOM SECTION: District Detail View OR Delhi 11-District Map */}
@@ -143,6 +143,7 @@ export const MapView: React.FC<MapViewProps> = ({
           aggregate={selectedAgg}
           activeLegend={activeLegend}
           clock={clock}
+          apiClient={apiClient}
           onBack={() => onSelectDistrict(null)}
           onOpenReport={() => handleOpenDrawer(activeDistrictId, selectedName)}
         />
@@ -156,18 +157,18 @@ export const MapView: React.FC<MapViewProps> = ({
                   <Compass className="w-4 h-4" />
                 </div>
                 <h2 className="text-base font-extrabold text-slate-950 tracking-tight">
-                  Delhi NCT Revenue District Map & Micro-Area Intelligence
+                  Delhi NCT 11-District Live Air Quality Map
                 </h2>
               </div>
               <p className="text-xs text-slate-500 mt-1">
-                Hover over any revenue district to inspect official CPCB AQI and particulate levels. Click a district to open the full analysis report.
+                Hover over any revenue district to inspect live CPCB AQI, PM2.5, PM10, and weather. Click a district to open its 4h/24h breakdown.
               </p>
             </div>
 
             <div className="flex items-center gap-2">
               <button
                 onClick={() => handleOpenDrawer('delhi_nct', 'National Capital Territory of Delhi')}
-                className="flex items-center gap-2 px-3.5 py-2 rounded-xl bg-slate-900 hover:bg-slate-800 text-white text-xs font-bold shadow-xs transition-colors focus:ring-2 focus:ring-sky-500"
+                className="flex items-center gap-2 px-3.5 py-2 rounded-xl bg-slate-900 hover:bg-slate-800 text-white text-xs font-bold shadow-xs transition-colors focus:ring-2 focus:ring-sky-500 cursor-pointer"
               >
                 <Compass className="w-4 h-4 text-sky-400" />
                 <span>Show Air Report</span>
@@ -189,14 +190,14 @@ export const MapView: React.FC<MapViewProps> = ({
             </div>
           ) : (
             <div className="space-y-4">
-              <MapLibreMap
+              <GoogleMapView
                 districtsGeoJson={districtsGeoJson}
                 aggregates={aggregates}
                 activeLegend={activeLegend}
                 clock={clock}
                 selectedDistrictId={activeDistrictId}
                 onSelectDistrict={(id) => onSelectDistrict(id)}
-                onOpenContextDrawer={(id) => handleOpenDrawer(id)}
+                onOpenContextDrawer={(id, name) => handleOpenDrawer(id, name)}
               />
 
               {/* Categorical Bands Legend (Domain Rule 8) */}
@@ -212,11 +213,11 @@ export const MapView: React.FC<MapViewProps> = ({
                   </div>
                   <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-2">
                     {activeLegend.bands.map((band) => {
-                      const token = BAND_COLOR_TOKENS[band.band_id];
+                      const token = BAND_COLOR_TOKENS[band.id];
                       const hex = token?.hex || '#94a3b8';
                       return (
                         <div
-                          key={band.band_id}
+                          key={band.id}
                           className="p-2 rounded-xl border border-slate-200/90 text-center space-y-0.5"
                           style={{ backgroundColor: `${hex}10` }}
                         >
@@ -226,7 +227,7 @@ export const MapView: React.FC<MapViewProps> = ({
                           />
                           <div className="text-[11px] font-bold text-slate-900">{band.label}</div>
                           <div className="text-[10px] font-mono text-slate-500">
-                            {band.min_value ?? 0}–{band.max_value ?? '500+'}
+                            {band.lower_bound ?? 0}–{band.upper_bound ?? '500+'}
                           </div>
                         </div>
                       );
@@ -246,6 +247,9 @@ export const MapView: React.FC<MapViewProps> = ({
         context={drawerContext}
         locationId={drawerLocationId}
         locationName={drawerLocationName}
+        apiClient={apiClient}
+        clock={clock || undefined}
+        session={session || undefined}
       />
     </div>
   );

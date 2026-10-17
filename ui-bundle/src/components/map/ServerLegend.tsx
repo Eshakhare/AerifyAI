@@ -90,18 +90,18 @@ export const ServerLegend: React.FC<ServerLegendProps> = ({
       {/* Bands Grid */}
       <div className="space-y-1" role="list" aria-label="Pollution Severity Categories">
         {legend.bands.map((band) => {
-          const colorToken = BAND_COLOR_TOKENS[band.band_id];
-          const isFiltered = activeBandFilter === band.band_id;
+          const colorToken = BAND_COLOR_TOKENS[band.id];
+          const isFiltered = activeBandFilter === band.id;
           const rangeLabel =
-            band.max_value !== null
-              ? `${band.min_value}–${band.max_value}`
-              : `> ${band.min_value}`;
+            band.upper_bound !== null
+              ? `${band.lower_bound}–${band.upper_bound}`
+              : `> ${band.lower_bound}`;
 
           return (
             <button
-              key={band.band_id}
+              key={band.id}
               role="listitem"
-              onClick={() => onFilterBand?.(isFiltered ? null : band.band_id)}
+              onClick={() => onFilterBand?.(isFiltered ? null : band.id)}
               className={`w-full flex items-center justify-between p-1.5 rounded-lg text-left transition cursor-pointer border ${
                 isFiltered
                   ? 'border-sky-400 bg-sky-50 shadow-xs ring-1 ring-sky-300'

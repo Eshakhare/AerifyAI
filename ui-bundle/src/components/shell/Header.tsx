@@ -70,16 +70,16 @@ export const Header: React.FC<HeaderProps> = ({
           root: 'Air Quality Dashboard',
           sub: activeDistrictName ? `${activeDistrictName} District` : undefined
         };
-      case 'simulations':
-        return { root: 'Action Impact Simulations', sub: 'S01–S12 Catalog' };
       case 'evaluations':
-        return { root: 'Verified Field Outcomes', sub: 'Sensor Audits' };
+        return { root: 'Govt Actions & Impact', sub: 'Clean Air Directives & Measured Results' };
+      case 'simulations':
+        return { root: 'Action Simulations', sub: 'Targeted Clean Air Suggestions' };
       case 'officer-portal':
-        return { root: 'Officer Action Portal', sub: 'MCD Interventions' };
+        return { root: 'Municipal Action Center', sub: 'Field Operations & Dispatch' };
       case 'dev-showcase':
-        return { root: 'Dev Component Showcase', sub: 'Schema 0.9 Contracts' };
+        return { root: 'Dev Component Showcase', sub: 'UI Primitives & Badges' };
       default:
-        return { root: 'Aerify Platform' };
+        return { root: 'Aerify Delhi Civic Portal' };
     }
   };
 
@@ -135,7 +135,7 @@ export const Header: React.FC<HeaderProps> = ({
               </div>
               <div className="text-left hidden sm:block">
                 <div className="text-xs font-bold text-slate-900 leading-tight">
-                  {session.role === 'SUPERVISOR' ? 'Dr. Sunita Rao' : 'Rajesh Kumar'}
+                  {session.role === 'SUPERVISOR' ? 'Dr. Sunita Rao' : 'Esha Khare'}
                 </div>
                 <div className="text-[10px] text-slate-500 font-medium">
                   {session.role === 'SUPERVISOR'
@@ -152,7 +152,7 @@ export const Header: React.FC<HeaderProps> = ({
                 {/* User Details */}
                 <div className="border-b border-slate-100 pb-2.5">
                   <div className="text-xs font-extrabold text-slate-950">
-                    {session.role === 'SUPERVISOR' ? 'Dr. Sunita Rao' : 'Rajesh Kumar'}
+                    {session.role === 'SUPERVISOR' ? 'Dr. Sunita Rao' : 'Esha Khare'}
                   </div>
                   <div className="text-[11px] text-slate-500 font-medium mt-0.5">
                     {session.role === 'SUPERVISOR'

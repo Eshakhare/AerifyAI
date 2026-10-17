@@ -18,6 +18,7 @@ import {
 import { Sidebar, NavTab } from './components/shell/Sidebar';
 import { Header } from './components/shell/Header';
 import { OfficerAuthModal } from './components/shell/OfficerAuthModal';
+import { signOutFirebaseClient } from './auth/firebase';
 
 import { MapView } from './views/MapView';
 import { ScenariosView } from './views/ScenariosView';
@@ -69,8 +70,29 @@ export default function App() {
     initApp();
   }, [apiClient]);
 
-  const handleRoleChange = async (newRole: Role) => {
-    if (apiClient.setFixtureRole) {
+  const handleRoleChange = async (newRole: Role, updatedSession?: SessionInfo) => {
+    if (updatedSession) {
+      setSession(updatedSession);
+    } else if (apiClient.loginWithCloudSql) {
+      try {
+        const emailForRole =
+          newRole === 'SUPERVISOR'
+            ? 'supervisor@dpcc.delhi.gov.in'
+            : newRole === 'OFFICER'
+            ? 'esha.khare@mcd.delhi.gov.in'
+            : 'citizen@delhi.in';
+        const resolved = await apiClient.loginWithCloudSql({
+          email: emailForRole,
+          requested_role: newRole
+        });
+        setSession(resolved);
+      } catch {
+        if (apiClient.setFixtureRole) {
+          apiClient.setFixtureRole(newRole);
+          await refreshSession();
+        }
+      }
+    } else if (apiClient.setFixtureRole) {
       apiClient.setFixtureRole(newRole);
       await refreshSession();
     }
@@ -80,6 +102,7 @@ export default function App() {
   };
 
   const handleSignOut = async () => {
+    await signOutFirebaseClient();
     if (apiClient.setFixtureRole) {
       apiClient.setFixtureRole('PUBLIC');
       await refreshSession();
@@ -204,11 +227,9 @@ export default function App() {
         {/* Civic Platform Footer */}
         <footer className="border-t border-slate-200 bg-white px-6 py-4 text-xs text-slate-500 flex flex-wrap items-center justify-between gap-4 mt-auto">
           <div className="flex items-center gap-2">
-            <span className="font-bold text-slate-900">Aerify AI</span>
+            <span className="font-bold text-slate-900">Aerify Delhi Civic Portal</span>
             <span>•</span>
             <span>Delhi Environmental Intelligence & Municipal Action Platform</span>
-            <span>•</span>
-            <span className="font-mono text-slate-600">Contract Schema 0.9</span>
           </div>
           <div className="text-[11px] text-slate-500 font-medium">
             Proximity context only — does not establish emissions causality.
@@ -221,6 +242,7 @@ export default function App() {
         isOpen={isAuthModalOpen}
         onClose={() => setIsAuthModalOpen(false)}
         onSelectRole={handleRoleChange}
+        apiClient={apiClient}
       />
     </div>
   );

@@ -144,6 +144,30 @@ export interface Coverage {
   expected_interval_seconds?: number | null;
 }
 
+export interface LiveWeatherSnapshot {
+  temperature_c: number;
+  humidity_pct: number;
+  precipitation_mm: number;
+  wind_speed_kmh: number;
+  wind_Speed_ms?: number;
+  wind_direction_deg: number;
+  wind_compass: string;
+}
+
+export interface LiveAirQualitySnapshot {
+  pm2_5: number;
+  pm10: number;
+  no2: number;
+  so2: number;
+  co: number;
+  o3: number;
+  us_aqi: number;
+  european_aqi: number;
+  indian_aqi: number;
+  primary_pollutant: string;
+  cpcb_category: string;
+}
+
 export interface MapAggregate {
   id: string;
   level: 'city' | 'district' | 'analysis_cell' | 'road_segment';
@@ -162,16 +186,26 @@ export interface MapAggregate {
   provenance_mix: string[];
   geometry_ref: string | null;
   geometry?: GeoJSONGeometry | null;
+  // Live enriched district & map properties
+  aqi?: number;
+  cpcb_category?: string;
+  primary_pollutant?: string;
+  pm25_4h_avg?: number;
+  pm10_4h_avg?: number;
+  pm25_24h_avg?: number;
+  pm10_24h_avg?: number;
+  sample_count_24h?: number;
+  centroid?: GeoPoint;
+  headquarters?: string;
+  weather?: LiveWeatherSnapshot;
 }
 
 export interface LegendBand {
-  band_id: BandId;
+  id: BandId;
   label: string;
-  min_value: number;
-  max_value: number | null;
   severity_rank: number;
-  description?: string;
-  color_hint?: string;
+  lower_bound: number;
+  upper_bound: number | null;
 }
 
 export interface Legend {
@@ -463,17 +497,103 @@ export interface PublicInterventionResponse {
   disclaimer: string;
 }
 
-export interface NearbySummary {
+export interface LocalityInfo {
+  is_within_delhi_ncr: boolean;
+  district_id: string;
+  district_name: string;
+  locality_name: string;
+  nearest_landmark: string;
+  distance_to_landmark_m: number;
+}
+
+export interface DistrictRollingWindow {
+  window: '4h' | '24h';
+  pm2_5_avg: number;
+  pm10_avg: number;
+  pm2_5_min: number;
+  pm2_5_max: number;
+  sample_count: number;
+}
+
+export interface DistrictSummaryResponse {
   schema_version: '0.9';
-  clock: ClockMetadata;
-  position: GeoPoint;
-  radius_m: number;
-  active_hotspots_count: number;
-  active_interventions_count: number;
-  direct_stations_count: number;
-  nearest_station_name: string | null;
-  nearest_station_distance_m: number | null;
-  current_air_quality_summary: string;
+  district_id: string;
+  district_name: string;
+  headquarters: string;
+  aqi: number;
+  cpcb_category: string;
+  primary_pollutant: string;
+  rolling_4h: DistrictRollingWindow;
+  rolling_24h: DistrictRollingWindow;
+  hourly_trend: Array<{
+    timestamp: string;
+    pm2_5: number;
+    pm10: number;
+    speed_kmh: number;
+    samples: number;
+  }>;
+  cpcb_stations: Array<{
+    id: string;
+    name: string;
+    agency: string;
+    latitude: number;
+    longitude: number;
+    pm2_5: number;
+    pm10: number;
+    no2: number;
+    aqi: number;
+    primary_pollutant: string;
+  }>;
+  live_weather: LiveWeatherSnapshot;
+  live_regional_aq: LiveAirQualitySnapshot;
+  last_observation_at?: string | null;
+}
+
+export interface NearbySummary {
+  requested_position: GeoPoint;
+  locality_info?: LocalityInfo;
+  live_weather?: LiveWeatherSnapshot;
+  live_air_quality?: LiveAirQualitySnapshot;
+  district_rolling?: {
+    district_id: string;
+    district_name: string;
+    pm25_4h_avg: number;
+    pm10_4h_avg: number;
+    pm25_24h_avg: number;
+    pm10_24h_avg: number;
+    sample_count_4h: number;
+    sample_count_24h: number;
+  };
+  nearest_road_observation: (Measurement & {
+    pm10_value?: number;
+    pm1_value?: number;
+    speed_kmh?: number;
+    bus_id?: string;
+    route_id?: string;
+    distance_m?: number;
+    within_500m?: boolean;
+  }) | null;
+  nearest_station: (Measurement & {
+    pm25_value?: number;
+    pm10_value?: number;
+    no2_value?: number;
+    primary_pollutant?: string;
+    cpcb_category?: string;
+    station_name?: string;
+    distance_m?: number;
+    distance_km?: number;
+  }) | null;
+  regional_model: (Measurement & {
+    pm10_value?: number;
+    no2_value?: number;
+    so2_value?: number;
+    o3_value?: number;
+    co_value?: number;
+    indian_aqi?: number;
+    us_aqi?: number;
+    cpcb_category?: string;
+  }) | null;
+  nearby_cities: MapAggregate[];
 }
 
 export interface LocationContext {
@@ -481,6 +601,8 @@ export interface LocationContext {
   clock: ClockMetadata;
   location_id: string;
   requested_position: GeoPoint;
+  live_weather?: LiveWeatherSnapshot;
+  live_air_quality?: LiveAirQualitySnapshot;
   weather: Measurement[];
   satellite: Measurement[];
   air_quality_model: Measurement[];
@@ -497,4 +619,42 @@ export interface SessionInfo {
   capabilities: Capability[];
   auth_mode: 'FIREBASE' | 'FIXTURE';
   display_name: string | null;
+  user?: AppUserRecord;
 }
+
+export interface AppUserRecord {
+  firebase_uid: string;
+  email: string | null;
+  role: Role;
+  active: boolean;
+  actor_ref: string;
+  display_name: string | null;
+  department?: string | null;
+  last_login_at?: string | null;
+}
+
+export interface AuthLoginPayload {
+  email?: string;
+  firebase_uid?: string;
+  display_name?: string;
+  requested_role?: Role;
+  id_token?: string;
+}
+
+export type AgentType = 'hotspot' | 'simulation' | 'audit';
+
+export interface AgentNarrativeResponse {
+  agent_id: string;
+  agent_type: AgentType;
+  target_id: string;
+  model_id: string;
+  evidence_state: EvidenceState;
+  summary: string;
+  evidence_bullets: string[];
+  confounder_disclosure: string;
+  governance_caveat: string;
+  generated_at: UtcTime;
+  is_fallback?: boolean;
+  cached?: boolean;
+}
+

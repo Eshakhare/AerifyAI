@@ -89,7 +89,7 @@ export const BAND_COLOR_TOKENS: Record<BandId, BandColorToken> = {
     bgClass: 'bg-amber-50',
     textClass: 'text-amber-900 font-semibold',
     borderClass: 'border-amber-300',
-    hex: '#eab308'
+    hex: '#f59e0b'
   },
   POOR: {
     id: 'POOR',
@@ -113,7 +113,7 @@ export const BAND_COLOR_TOKENS: Record<BandId, BandColorToken> = {
     bgClass: 'bg-rose-100',
     textClass: 'text-rose-950 font-bold',
     borderClass: 'border-rose-400',
-    hex: '#991b1b'
+    hex: '#7f1d1d'
   }
 };
 

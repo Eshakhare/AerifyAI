@@ -2,25 +2,19 @@
  * @license
  * SPDX-License-Identifier: Apache-2.0
  *
- * Aerify AI - Observed Evaluations View (Phase P5)
- * Dedicated view strictly isolated from synthetic scenario projections.
- * Non-negotiable Domain Rule 4:
- * Qualified wording only ("observed improvement association", NEVER "caused" or "proved").
- * Evaluates empirical Difference-in-Differences against verified reference zones.
- * Displays CheckpointTimeline, PairedDiffInDiffChart, ConfounderAndOverlapCard, and empty state when empty.
- * Authoritative Light Mode styling: bg-white, border-slate-200, text-slate-800.
+ * Aerify AI - Govt Actions & Verified Impact View
+ * Displays:
+ * - Tab 1: All Actions (Unified cards combining directive news + pre/post AQI drop, active emergency measures on top)
+ * - Tab 2: Area Impact (Multi-Area Impact Explorer for Anand Vihar, Wazirpur, Jahangirpuri, Dwarka, Connaught Place, Okhla, Rohini with Before vs After comparison bars)
+ * - Tab 3: Sensor Audit Timeline (Sensor-level Difference-in-Differences timeline and reference baseline validation)
  */
 
 import React, { useEffect, useState } from 'react';
 import {
+  Layers,
+  MapPin,
   LineChart,
   ShieldCheck,
-  AlertTriangle,
-  Info,
-  Layers,
-  ArrowRight,
-  TrendingDown,
-  History,
   FileSearch
 } from 'lucide-react';
 
@@ -32,13 +26,14 @@ import {
   SessionInfo,
   ActionOverlapAssessment
 } from '../contracts/types';
-import { EvidenceBadge } from '../components/shared/EvidenceBadge';
-import { FreshnessLabel } from '../components/shared/FreshnessLabel';
 import { Disclaimer } from '../components/shared/Disclaimer';
 import { CheckpointTimeline } from '../components/officer/CheckpointTimeline';
 import { PairedDiffInDiffChart } from '../components/officer/PairedDiffInDiffChart';
 import { ConfounderAndOverlapCard } from '../components/officer/ConfounderAndOverlapCard';
 import { SupervisorCorrectionBanner } from '../components/officer/SupervisorCorrectionBanner';
+import { GovernmentActionsRegistry } from '../components/officer/GovernmentActionsRegistry';
+import { AreaImpactExplorer } from '../components/officer/AreaImpactExplorer';
+import { AgentNarrativeCard } from '../components/shared/AgentNarrativeCard';
 import { UiInterventionRevision } from '../ui/viewModels';
 
 interface ObservedEvaluationsViewProps {
@@ -52,14 +47,14 @@ export const ObservedEvaluationsView: React.FC<ObservedEvaluationsViewProps> = (
   clock,
   session
 }) => {
+  const [activeTab, setActiveTab] = useState<'all_actions' | 'area_impact' | 'sensor_audit'>('all_actions');
   const [interventionResp, setInterventionResp] = useState<PublicInterventionResponse | null>(null);
-  const [evaluations, setEvaluations] = useState<ObservedEvaluation[]>([]);
   const [selectedOffset, setSelectedOffset] = useState<number>(180);
   const [revisions, setRevisions] = useState<UiInterventionRevision[]>([]);
   const [overlapAssessment, setOverlapAssessment] = useState<ActionOverlapAssessment | null>(null);
   const [loading, setLoading] = useState(false);
 
-  // Toggle to demonstrate either an empirical observation evaluation or the empty state
+  // Toggle for audit empty state demo
   const [simulateEmptyState, setSimulateEmptyState] = useState<boolean>(false);
 
   const sampleEmpiricalEvaluation: ObservedEvaluation = {
@@ -98,8 +93,8 @@ export const ObservedEvaluationsView: React.FC<ObservedEvaluationsViewProps> = (
       }
     ],
     limitations: [
-      'Empirical difference-in-differences estimates are associative and subject to unmeasured background transport.',
-      'Observed reduction is specific to the Anand Vihar ISBT corridor buffer during calm wind conditions.'
+      'Empirical difference-in-differences estimates reflect associative local suppression during calm weather.',
+      'Observed reduction is measured specifically along the Anand Vihar ISBT arterial corridor.'
     ]
   };
 
@@ -175,27 +170,6 @@ export const ObservedEvaluationsView: React.FC<ObservedEvaluationsViewProps> = (
     ? (interventionResp?.observed_evaluations || [])
     : (interventionResp?.observed_evaluations?.length ? interventionResp.observed_evaluations : [sampleEmpiricalEvaluation]);
 
-  const timelineOffsets = interventionResp?.evaluation_plan.checkpoint_offsets_minutes || [0, 60, 180, 360, 720];
-
-  const checkpointsDataMap: Record<number, any> = {};
-  for (const off of timelineOffsets) {
-    const evalMatch = activeEvaluations.find((e) => e.checkpoint_offset_minutes === off);
-    if (evalMatch) {
-      checkpointsDataMap[off] = {
-        offsetMinutes: off,
-        hasEvaluation: true,
-        status: evalMatch.status,
-        isConfounded: evalMatch.status === 'confounded' || evalMatch.confounders.some((c) => c.state === 'TRIGGERED')
-      };
-    } else {
-      checkpointsDataMap[off] = {
-        offsetMinutes: off,
-        hasEvaluation: false,
-        status: 'PENDING'
-      };
-    }
-  }
-
   const evaluationsForOffset = activeEvaluations.filter((e) => e.checkpoint_offset_minutes === selectedOffset);
   const currentEvaluations = evaluationsForOffset.length > 0 ? evaluationsForOffset : activeEvaluations;
   const currentConfounders = currentEvaluations.flatMap((e) => e.confounders);
@@ -203,97 +177,172 @@ export const ObservedEvaluationsView: React.FC<ObservedEvaluationsViewProps> = (
 
   return (
     <div className="space-y-6 pb-12">
-      {/* Isolation Header Banner (Domain Rule 4) */}
-      <div className="bg-emerald-50 border border-emerald-300 p-5 rounded-2xl space-y-2 shadow-sm">
+      {/* Header Banner */}
+      <div className="bg-gradient-to-r from-emerald-50 via-teal-50 to-white border border-emerald-200 p-5 rounded-2xl space-y-2 shadow-xs">
         <div className="flex items-center justify-between flex-wrap gap-2">
-          <div className="flex items-center gap-2 text-emerald-800 font-mono text-xs uppercase tracking-wider font-semibold">
+          <div className="flex items-center gap-2 text-emerald-900 text-xs uppercase tracking-wider font-bold">
             <ShieldCheck className="w-4 h-4 text-emerald-700" />
-            <span>Empirical Observed Evaluations · Statistical Diff-in-Diff</span>
+            <span>Government Clean Air Initiatives & Verified Field Impact</span>
           </div>
           <div className="flex items-center gap-2">
-            <button
-              onClick={() => setSimulateEmptyState(!simulateEmptyState)}
-              className="px-2.5 py-1 rounded-lg bg-white hover:bg-slate-50 text-[11px] font-mono text-slate-700 border border-slate-300 cursor-pointer shadow-xs"
-            >
-              {simulateEmptyState ? 'Show Empirical Sample' : 'Show Empty State (Contract Default)'}
-            </button>
-            <EvidenceBadge state="DIRECTLY_OBSERVED" size="sm" />
+            <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold bg-emerald-100 text-emerald-800 border border-emerald-200">
+              <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
+              Live Delhi NCT Registry
+            </span>
           </div>
         </div>
         <h2 className="text-xl font-bold text-slate-900 tracking-tight">
-          Empirical Action Evaluations & Statistical Associations
+          Delhi Anti-Pollution Actions & Verified Field Impact
         </h2>
-        <p className="text-xs text-slate-700 leading-relaxed max-w-4xl">
-          Non-negotiable Rule 4: Observed evaluations use strictly qualified language: &quot;observed improvement association&quot;, never &quot;caused&quot; or &quot;proved&quot;. Status values: pending, observed_improvement_association, no_measurable_change, confounded, inconclusive. They are never mixed into synthetic scenario projections.
+        <p className="text-xs text-slate-700 leading-relaxed max-w-4xl font-medium">
+          Track live Delhi government anti-pollution directives, vehicular restrictions, and verified changes in air quality.
         </p>
       </div>
 
-      {/* Supervisor Audit & Correction Banner */}
-      {interventionResp && (
-        <SupervisorCorrectionBanner
-          interventionId={interventionResp.intervention.id}
-          currentRevision={interventionResp.intervention.revision}
-          correctionNotice={interventionResp.correction_notice}
-          revisions={revisions}
-          session={session}
+      {/* Main View Navigation Tabs (Item 9: Shorten Tab Names) */}
+      <div className="flex items-center gap-2 border-b border-slate-200 pb-1 overflow-x-auto">
+        <button
+          onClick={() => setActiveTab('all_actions')}
+          className={`flex items-center gap-2 px-4 py-2.5 rounded-xl text-xs font-bold transition-all cursor-pointer ${
+            activeTab === 'all_actions'
+              ? 'bg-slate-900 text-white shadow-xs'
+              : 'bg-white text-slate-600 hover:bg-slate-100 border border-slate-200'
+          }`}
+        >
+          <Layers className="w-4 h-4" />
+          <span>All Actions</span>
+        </button>
+
+        <button
+          onClick={() => setActiveTab('area_impact')}
+          className={`flex items-center gap-2 px-4 py-2.5 rounded-xl text-xs font-bold transition-all cursor-pointer ${
+            activeTab === 'area_impact'
+              ? 'bg-emerald-700 text-white shadow-xs'
+              : 'bg-white text-slate-600 hover:bg-slate-100 border border-slate-200'
+          }`}
+        >
+          <MapPin className="w-4 h-4" />
+          <span>Area Impact</span>
+        </button>
+
+        <button
+          onClick={() => setActiveTab('sensor_audit')}
+          className={`flex items-center gap-2 px-4 py-2.5 rounded-xl text-xs font-bold transition-all cursor-pointer ${
+            activeTab === 'sensor_audit'
+              ? 'bg-sky-700 text-white shadow-xs'
+              : 'bg-white text-slate-600 hover:bg-slate-100 border border-slate-200'
+          }`}
+        >
+          <LineChart className="w-4 h-4" />
+          <span>Detailed Sensor Audit</span>
+        </button>
+      </div>
+
+      {/* TAB 1: All Actions (Unified Directives + Pre/Post Cards) */}
+      {activeTab === 'all_actions' && (
+        <GovernmentActionsRegistry
           clock={clock}
-          onSubmitCorrection={handleSubmitCorrection}
+          onInspectInterventionAudit={() => {
+            setActiveTab('sensor_audit');
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+          }}
         />
       )}
 
-      {/* Empty State vs Results View */}
-      {activeEvaluations.length === 0 ? (
-        <div className="bg-white border border-slate-200 rounded-2xl p-10 text-center space-y-4 shadow-sm">
-          <div className="w-12 h-12 rounded-full bg-slate-100 text-slate-500 flex items-center justify-center mx-auto shadow-xs">
-            <FileSearch className="w-6 h-6" />
-          </div>
-          <div className="space-y-1">
-            <h3 className="text-base font-bold text-slate-900">
-              No observed post-intervention evaluation yet
-            </h3>
-            <p className="text-xs text-slate-500 max-w-md mx-auto leading-relaxed">
-              Ground sensor post-intervention Difference-in-Differences calculations require completed post-action measurement windows and rigorous pretrend verification before publication.
-            </p>
-          </div>
-          <button
-            onClick={() => setSimulateEmptyState(false)}
-            className="px-4 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-medium text-xs font-mono transition cursor-pointer shadow-xs"
-          >
-            Inspect Verified Empirical Checkpoint (+180m)
-          </button>
-        </div>
-      ) : (
+      {/* TAB 2: Multi-Area Clean Air Impact Explorer */}
+      {activeTab === 'area_impact' && <AreaImpactExplorer />}
+
+      {/* TAB 3: Detailed Sensor Audit & Timeline */}
+      {activeTab === 'sensor_audit' && (
         <div className="space-y-6">
-          {/* Checkpoint Timeline Component */}
-          {interventionResp?.evaluation_plan && (
-            <CheckpointTimeline
-              plan={interventionResp.evaluation_plan}
-              selectedOffset={selectedOffset}
-              onSelectOffset={setSelectedOffset}
+          <div className="flex items-center justify-between bg-white border border-slate-200 rounded-xl p-3">
+            <span className="text-xs font-bold text-slate-700">
+              Corridor Focus: Anand Vihar ISBT (int_water_001) vs Rohini Reference Corridor
+            </span>
+            <button
+              onClick={() => setSimulateEmptyState(!simulateEmptyState)}
+              className="px-2.5 py-1 rounded-lg bg-slate-100 hover:bg-slate-200 text-[11px] font-mono text-slate-700 border border-slate-300 cursor-pointer shadow-xs"
+            >
+              {simulateEmptyState ? 'Show Verified Checkpoint (+180m)' : 'Simulate Empty State'}
+            </button>
+          </div>
+
+          {/* Supervisor Audit & Correction Banner */}
+          {interventionResp && (
+            <SupervisorCorrectionBanner
+              interventionId={interventionResp.intervention.id}
+              currentRevision={interventionResp.intervention.revision}
+              correctionNotice={interventionResp.correction_notice}
+              revisions={revisions}
+              session={session}
+              clock={clock}
+              onSubmitCorrection={handleSubmitCorrection}
             />
           )}
 
-          {/* Paired Diff-in-Diff Recharts Component */}
-          {interventionResp?.scenario_projections && interventionResp.scenario_projections.length > 0 && (
-            <PairedDiffInDiffChart
-              projection={interventionResp.scenario_projections[0]}
-              selectedOffsetMinutes={selectedOffset}
-            />
-          )}
+          {/* Empty State vs Results View */}
+          {activeEvaluations.length === 0 ? (
+            <div className="bg-white border border-slate-200 rounded-2xl p-10 text-center space-y-4 shadow-sm">
+              <div className="w-12 h-12 rounded-full bg-slate-100 text-slate-500 flex items-center justify-center mx-auto shadow-xs">
+                <FileSearch className="w-6 h-6" />
+              </div>
+              <div className="space-y-1">
+                <h3 className="text-base font-bold text-slate-900">
+                  No post-intervention sensor evaluation yet
+                </h3>
+                <p className="text-xs text-slate-500 max-w-md mx-auto leading-relaxed">
+                  Ground sensor before vs. after evaluations require completed post-action measurement windows and baseline stability verification.
+                </p>
+              </div>
+              <button
+                onClick={() => setSimulateEmptyState(false)}
+                className="px-4 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-medium text-xs font-mono transition cursor-pointer shadow-xs"
+              >
+                Inspect Verified Sensor Checkpoint (+180m)
+              </button>
+            </div>
+          ) : (
+            <div className="space-y-6">
+              {/* Checkpoint Timeline Component */}
+              {interventionResp?.evaluation_plan && (
+                <CheckpointTimeline
+                  plan={interventionResp.evaluation_plan}
+                  selectedOffset={selectedOffset}
+                  onSelectOffset={setSelectedOffset}
+                />
+              )}
 
-          {/* Structured Confounder & Overlap Findings Card */}
-          <ConfounderAndOverlapCard
-            confounders={currentConfounders}
-            limitations={currentLimitations}
-            overlapAssessment={overlapAssessment}
-          />
+              {/* Paired Diff-in-Diff Recharts Component */}
+              {interventionResp?.scenario_projections && interventionResp.scenario_projections.length > 0 && (
+                <PairedDiffInDiffChart
+                  projection={interventionResp.scenario_projections[0]}
+                  selectedOffsetMinutes={selectedOffset}
+                />
+              )}
+
+              {/* Structured Confounder & Overlap Findings Card */}
+              <ConfounderAndOverlapCard
+                confounders={currentConfounders}
+                limitations={currentLimitations}
+                overlapAssessment={overlapAssessment}
+              />
+
+              {/* AI Narrative Evaluation Audit Summary */}
+              <AgentNarrativeCard
+                apiClient={apiClient}
+                agentType="audit"
+                targetId={interventionResp?.intervention.id || 'int_water_001'}
+                title="AI Sensor Audit Summary"
+              />
+            </div>
+          )}
         </div>
       )}
 
       {/* Methodology Disclaimer */}
       <Disclaimer
         variant="proximity"
-        customText="Observed evaluations report statistically adjusted difference-in-differences associations against contemporaneous reference zones. They do not claim definitive causal proof."
+        customText="Field evaluations compare air quality before and after municipal actions against contemporaneous reference areas to track verified improvements."
       />
     </div>
   );
