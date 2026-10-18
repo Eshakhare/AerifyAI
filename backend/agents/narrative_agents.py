@@ -267,18 +267,25 @@ def generate_governed_narrative(
                 "is_fallback": False,
                 "cached": False,
             }
-        except Exception:
+        except Exception as exc:
             is_fallback = True
             result_payload = _build_deterministic_fallback(agent_type, target_id, context_bundle, model_used)
             result_payload["generated_at"] = now_iso
             result_payload["is_fallback"] = True
             result_payload["cached"] = False
+            result_payload["error_notice"] = f"Gemini API invocation error: {str(exc)}"
+            result_payload["limit_exceeded"] = "quota" in str(exc).lower() or "429" in str(exc)
     else:
         is_fallback = True
         result_payload = _build_deterministic_fallback(agent_type, target_id, context_bundle, model_used)
         result_payload["generated_at"] = now_iso
         result_payload["is_fallback"] = True
         result_payload["cached"] = False
+        result_payload["limit_exceeded"] = True
+        result_payload["error_notice"] = (
+            f"Gemini API daily call limit reached ({daily_calls}/{settings.gemini_daily_call_limit} calls today). "
+            "Showing deterministic scientific fallback."
+        )
 
     db.merge(
         CachedNarrativeRecord(

@@ -4,7 +4,9 @@
  *
  * Aerify AI - Government Actions & Verified Impact Registry (Tab 1: All Actions)
  * Displays unified cards combining directive announcements + before/after AQI drop in the same card,
- * with active emergency measures on top.
+ * with active statutory emergency measures on top.
+ * Fully multi-state aware (Delhi NCT, Karnataka, Maharashtra, Uttar Pradesh)
+ * with verified statutory orders decoupled from synthetic sensor triggers.
  */
 
 import React, { useState } from 'react';
@@ -21,23 +23,33 @@ import {
   TrendingDown,
   Sparkles,
   ExternalLink,
-  SlidersHorizontal,
   ChevronRight,
-  Shield,
-  Layers,
   Flame,
-  Radio
+  Layers,
+  MapPin
 } from 'lucide-react';
 import { ClockMetadata } from '../../contracts/types';
+import { FocusStateCode, FOCUS_REGIONS } from '../../services/multiStateRegions';
 
-export type ActionFilterCategory = 'ALL' | 'EMERGENCY_DIRECTIVES' | 'VERIFIED_IMPACT' | 'MIST_SUPPRESSION' | 'ROAD_SWEEPING';
+export type ActionFilterCategory =
+  | 'ALL'
+  | 'EMERGENCY_DIRECTIVES'
+  | 'VERIFIED_IMPACT'
+  | 'MIST_SUPPRESSION'
+  | 'ROAD_SWEEPING';
 
 export interface GovtActionItem {
   id: string;
+  stateCode: FocusStateCode;
   title: string;
   isEmergencyDirective: boolean;
   category: 'GOVERNMENT_DIRECTIVE' | 'FIELD_OPERATION';
-  interventionType: 'VEHICLE_RESTRICTION' | 'CIVIC_INFRASTRUCTURE' | 'WATER_SUPPRESSION' | 'ROAD_SWEEPING' | 'EMISSION_ENFORCEMENT';
+  interventionType:
+    | 'VEHICLE_RESTRICTION'
+    | 'CIVIC_INFRASTRUCTURE'
+    | 'WATER_SUPPRESSION'
+    | 'ROAD_SWEEPING'
+    | 'EMISSION_ENFORCEMENT';
   status: 'POLICY_ACTIVE' | 'CIVIC_INFRASTRUCTURE' | 'VERIFIED_IMPACT' | 'CONFOUNDED' | 'UNMEASURED';
   badgeLabel: string;
   badgeVariant: 'emerald' | 'amber' | 'slate' | 'sky' | 'purple' | 'rose';
@@ -55,30 +67,34 @@ export interface GovtActionItem {
   unit: string;
   directiveHighlight?: string;
   stableExplanation?: string;
-  isDetailedAuditAvailable?: boolean;
 }
 
 interface GovernmentActionsRegistryProps {
   clock: ClockMetadata;
-  onInspectInterventionAudit?: (actionId: string) => void;
+  selectedState?: FocusStateCode;
 }
 
 export const GovernmentActionsRegistry: React.FC<GovernmentActionsRegistryProps> = ({
   clock,
-  onInspectInterventionAudit
+  selectedState = 'delhi'
 }) => {
   const [selectedFilter, setSelectedFilter] = useState<ActionFilterCategory>('ALL');
   const [expandedActionId, setExpandedActionId] = useState<string | null>('govt_act_001');
 
-  // Today's Odd-Even rule computation
+  // Today's Odd-Even rule computation for Delhi
   const effectiveDate = new Date(clock.effective_now);
   const dayOfMonth = effectiveDate.getUTCDate();
   const isEvenDay = dayOfMonth % 2 === 0;
 
-  const actionsList: GovtActionItem[] = [
-    // --- PINNED ACTIVE EMERGENCY MEASURES ON TOP ---
+  const currentRegion = FOCUS_REGIONS[selectedState] || FOCUS_REGIONS.delhi;
+
+  const ALL_ACTIONS: GovtActionItem[] = [
+    // =========================================================================
+    // 1. DELHI NCT ACTIONS & DIRECTIVES
+    // =========================================================================
     {
-      id: 'govt_act_001',
+      id: 'delhi_act_001',
+      stateCode: 'delhi',
       title: 'Delhi Odd-Even Vehicle Rationing Scheme (Phase IV)',
       isEmergencyDirective: true,
       category: 'GOVERNMENT_DIRECTIVE',
@@ -88,7 +104,8 @@ export const GovernmentActionsRegistry: React.FC<GovernmentActionsRegistryProps>
       badgeVariant: 'rose',
       dateTimeLabel: 'Enforced Oct 14 – Oct 24, 2026 · 08:00 – 20:00 IST Daily',
       locationCorridor: 'All 11 Delhi NCT Districts (Territory-wide)',
-      actionDetails: 'Mandatory four-wheeler rationing by vehicle registration plate last digit. 124 border checkpoints and 400+ flying enforcement teams deployed with ANPR camera verification.',
+      actionDetails:
+        'Mandatory four-wheeler rationing by vehicle registration plate last digit. 124 border checkpoints and 400+ flying enforcement teams deployed with ANPR camera verification.',
       equipmentSummary: 'Delhi Traffic Police & Transport Dept squads · 124 Interceptor vans',
       preAqi: 378,
       postAqi: 326,
@@ -96,22 +113,28 @@ export const GovernmentActionsRegistry: React.FC<GovernmentActionsRegistryProps>
       deltaLabel: '-52 AQI Points',
       pctReduction: '-13.8%',
       unit: 'AQI',
-      directiveHighlight: `TODAY'S ENFORCEMENT: ${isEvenDay ? 'EVEN DIGIT DAY (Plates ending in 0, 2, 4, 6, 8 permitted)' : 'ODD DIGIT DAY (Plates ending in 1, 3, 5, 7, 9 permitted)'}. Violations attract ₹20,000 fine under Motor Vehicles Act. Exempt: EVs, certified CNG commercial, emergency services, women-only drivers.`,
-      stableExplanation: 'City-wide traffic volume dropped by 31%, resulting in a verified 13.8% reduction in street-level nitrogen oxides and fine particulates.',
-      isDetailedAuditAvailable: false
+      directiveHighlight: `TODAY'S ENFORCEMENT: ${
+        isEvenDay
+          ? 'EVEN DIGIT DAY (Plates ending in 0, 2, 4, 6, 8 permitted)'
+          : 'ODD DIGIT DAY (Plates ending in 1, 3, 5, 7, 9 permitted)'
+      }. Violations attract ₹20,000 fine under Motor Vehicles Act. Exempt: EVs, certified CNG commercial, emergency services, women-only drivers.`,
+      stableExplanation:
+        'City-wide traffic volume dropped by 31%, resulting in a verified 13.8% reduction in street-level nitrogen oxides and fine particulates.'
     },
     {
-      id: 'govt_act_002',
-      title: 'GRAP Stage-IV Commercial Diesel Truck Entry Ban',
+      id: 'delhi_act_002',
+      stateCode: 'delhi',
+      title: 'CAQM GRAP Stage-IV Commercial Diesel Truck Entry Ban',
       isEmergencyDirective: true,
       category: 'GOVERNMENT_DIRECTIVE',
       interventionType: 'VEHICLE_RESTRICTION',
       status: 'POLICY_ACTIVE',
       badgeLabel: 'Active Civic Directive',
       badgeVariant: 'rose',
-      dateTimeLabel: 'Continuous 24x7 Enforcement · Effective 12 Oct 2026',
+      dateTimeLabel: 'Continuous 24x7 Enforcement · Statutory Notification 2026',
       locationCorridor: 'Delhi Border Checkposts (Singhu, Tikri, Badarpur, Ghazipur, Kapashera)',
-      actionDetails: 'Immediate ban on entry of non-BS6 medium and heavy diesel goods vehicles into Delhi territory. Only trucks carrying essential commodities or running on LNG/CNG/EV permitted.',
+      actionDetails:
+        'Immediate 24x7 prohibition on non-BS6 medium and heavy diesel goods vehicles entering Delhi territory. Essential goods and LNG/CNG/EVs strictly exempted with RFID diversion via Peripheral Expressways.',
       equipmentSummary: 'RFID automatic toll barriers, MCD diversion corridors via EPE/WPE bypass expressways',
       preAqi: 412,
       postAqi: 358,
@@ -119,22 +142,51 @@ export const GovernmentActionsRegistry: React.FC<GovernmentActionsRegistryProps>
       deltaLabel: '-54 AQI Points',
       pctReduction: '-18.5%',
       unit: 'AQI',
-      directiveHighlight: 'Heavy interstate freight diverted away from Delhi urban core via Eastern and Western Peripheral Expressways.',
-      stableExplanation: 'Nighttime roadside PM2.5 spikes along GT Karnal Road and Mathura Road corridor dropped by 18.5% compared to the prior week baseline.',
-      isDetailedAuditAvailable: false
+      directiveHighlight:
+        'Heavy interstate freight diverted away from Delhi urban core via Eastern and Western Peripheral Expressways.',
+      stableExplanation:
+        'Nighttime roadside PM2.5 spikes along GT Karnal Road and Mathura Road corridor dropped by 18.5% compared to the prior week baseline.'
     },
     {
-      id: 'govt_act_003',
-      title: '24x7 Delhi Green War Room & AI Environmental Command Center',
+      id: 'delhi_act_003',
+      stateCode: 'delhi',
+      title: 'Complete Firecracker Blanket Ban (Section 31(A) Air Act)',
+      isEmergencyDirective: true,
+      category: 'GOVERNMENT_DIRECTIVE',
+      interventionType: 'EMISSION_ENFORCEMENT',
+      status: 'POLICY_ACTIVE',
+      badgeLabel: 'Blanket Ban',
+      badgeVariant: 'rose',
+      dateTimeLabel: 'Statutory Order · Delhi DPCC Notification',
+      locationCorridor: 'Territory-wide NCT of Delhi',
+      actionDetails:
+        'Complete prohibition on manufacture, storage, sale (including online delivery portals), and bursting of all firecrackers across the NCT of Delhi under Section 31(A) of Air (Prevention and Control of Pollution) Act.',
+      equipmentSummary: 'Delhi Police Special Flying Squads · DPCC Joint Vigilance Teams',
+      preAqi: 390,
+      postAqi: 345,
+      metricLabel: 'Peak Episodic AQI Suppression',
+      deltaLabel: '-45 AQI Points',
+      pctReduction: '-11.5%',
+      unit: 'AQI',
+      directiveHighlight:
+        'Strict legal ban under Section 31(A) Air Act. Flying squads patrolling major wholesale transit hubs.',
+      stableExplanation:
+        'Suppressed seasonal episodic particulate peaks across sensitive residential sectors.'
+    },
+    {
+      id: 'delhi_act_004',
+      stateCode: 'delhi',
+      title: '24x7 Delhi Green War Room & Environmental AI Command Hub',
       isEmergencyDirective: true,
       category: 'GOVERNMENT_DIRECTIVE',
       interventionType: 'CIVIC_INFRASTRUCTURE',
       status: 'CIVIC_INFRASTRUCTURE',
-      badgeLabel: 'Operational Command Hub',
+      badgeLabel: 'Command Hub',
       badgeVariant: 'purple',
-      dateTimeLabel: 'Commissioned 05 Oct 2026 · Delhi Secretariat, ITO',
+      dateTimeLabel: 'Commissioned · Delhi Secretariat, ITO',
       locationCorridor: 'Delhi Environment Department & DPCC Central Headquarters',
-      actionDetails: 'Central command and triage hub integrating live telemetry from 40 official monitoring stations, 52 DTC mobile bus sensor units, and 13 live drone feeds over critical pollution hotspots.',
+      actionDetails:
+        'Central command and triage hub integrating continuous telemetry from 40 official CAAQMS stations, satellite atmospheric models, and automated anti-smog water tanker dispatch squads.',
       equipmentSummary: 'Central AI telemetry dashboard, automated MCD water tanker dispatch, Green Delhi app triage',
       preAqi: 395,
       postAqi: 338,
@@ -142,14 +194,14 @@ export const GovernmentActionsRegistry: React.FC<GovernmentActionsRegistryProps>
       deltaLabel: 'Response: 4.2h → 48m',
       pctReduction: '-81%',
       unit: 'min',
-      directiveHighlight: 'Automated dispatch triggers within 30 minutes of any sensor detecting persistent PM10 > 250 µg/m³ or PM2.5 > 150 µg/m³.',
-      stableExplanation: 'Drastically accelerated municipal field response across Anand Vihar, Jahangirpuri, and Wazirpur industrial clusters.',
-      isDetailedAuditAvailable: false
+      directiveHighlight:
+        'Automated municipal action dispatch triggered for persistent hotspot alerts across Anand Vihar, Jahangirpuri, and Wazirpur.',
+      stableExplanation:
+        'Drastically accelerated municipal field response across 13 recognized Delhi pollution hotspots.'
     },
-
-    // --- FIELD ACTIONS & LOCAL INTERVENTIONS ---
     {
-      id: 'govt_act_004',
+      id: 'delhi_act_005',
+      stateCode: 'delhi',
       title: 'Targeted Mist Cannon Water Suppression — Anand Vihar ISBT',
       isEmergencyDirective: false,
       category: 'FIELD_OPERATION',
@@ -157,9 +209,10 @@ export const GovernmentActionsRegistry: React.FC<GovernmentActionsRegistryProps>
       status: 'VERIFIED_IMPACT',
       badgeLabel: 'Verified Measured Impact',
       badgeVariant: 'emerald',
-      dateTimeLabel: '08 Oct 2026 · 09:15 – 09:45 IST',
-      locationCorridor: 'Anand Vihar ISBT Arterial Loop (Corridor #014), East Delhi',
-      actionDetails: 'Continuous high-pressure fine droplet mist spray deployed across the interstate bus terminal ingress and Ring Road intersection to suppress road re-suspension.',
+      dateTimeLabel: 'Morning Dispatch · 09:15 – 09:45 IST',
+      locationCorridor: 'Anand Vihar ISBT Arterial Loop, East Delhi',
+      actionDetails:
+        'Continuous high-pressure fine droplet mist spray deployed across interstate bus terminal ingress and Ring Road intersection to suppress road dust resuspension.',
       equipmentSummary: '2x MCD Heavy Mist Cannons · 12,000L treated STP recycled water · 1.2 km corridor coverage',
       preAqi: 242,
       postAqi: 198,
@@ -169,21 +222,23 @@ export const GovernmentActionsRegistry: React.FC<GovernmentActionsRegistryProps>
       deltaLabel: '-44 AQI Points (-24.4 µg/m³ PM10)',
       pctReduction: '-18.2%',
       unit: 'µg/m³',
-      stableExplanation: 'Evaluated against contemporaneous Rohini reference corridor with calm baseline winds. Net particulate reduction statistically verified.',
-      isDetailedAuditAvailable: true
+      stableExplanation:
+        'Evaluated against contemporaneous reference corridor with calm baseline winds. Net particulate reduction statistically verified.'
     },
     {
-      id: 'govt_act_005',
-      title: 'Anti-Smog Mobile Cannon — Palam–Dwarka Expressway',
+      id: 'delhi_act_006',
+      stateCode: 'delhi',
+      title: 'Anti-Smog Mobile Cannon — Palam–Dwarka Elevated Expressway',
       isEmergencyDirective: false,
       category: 'FIELD_OPERATION',
       interventionType: 'WATER_SUPPRESSION',
       status: 'VERIFIED_IMPACT',
       badgeLabel: 'Verified Measured Impact',
       badgeVariant: 'emerald',
-      dateTimeLabel: '09 Oct 2026 · 07:00 – 07:45 IST',
-      locationCorridor: 'Palam–Dwarka Sector 9–10 Elevated Corridor, South-West Delhi',
-      actionDetails: 'Mobile mist cannon dispatched to curb early-morning traffic-induced particulate peaks ahead of school bus and office transit rush.',
+      dateTimeLabel: 'Early Morning Run · 07:00 – 07:45 IST',
+      locationCorridor: 'Palam–Dwarka Sector 9–10 Elevated Corridor, South West Delhi',
+      actionDetails:
+        'Mobile mist cannon dispatched to curb early-morning traffic-induced particulate peaks ahead of school bus and office transit rush.',
       equipmentSummary: '1x MCD Vehicle-Mounted Anti-Smog Gun · 8,000L capacity · 2.4 km road stretch',
       preAqi: 285,
       postAqi: 240,
@@ -193,120 +248,230 @@ export const GovernmentActionsRegistry: React.FC<GovernmentActionsRegistryProps>
       deltaLabel: '-45 AQI Points (-23.5 µg/m³ PM2.5)',
       pctReduction: '-15.8%',
       unit: 'µg/m³',
-      stableExplanation: 'Continuous mobile gun operation curbed particulate peak during early morning hours before commuter influx.',
-      isDetailedAuditAvailable: false
+      stableExplanation:
+        'Continuous mobile gun operation curbed particulate peak during early morning hours before commuter influx.'
     },
     {
-      id: 'govt_act_006',
-      title: 'Anti-Smog Gun Dust Settling — Jahangirpuri Flyover',
-      isEmergencyDirective: false,
-      category: 'FIELD_OPERATION',
-      interventionType: 'WATER_SUPPRESSION',
-      status: 'VERIFIED_IMPACT',
-      badgeLabel: 'Verified Measured Impact',
-      badgeVariant: 'emerald',
-      dateTimeLabel: '11 Oct 2026 · 08:30 – 09:15 IST',
-      locationCorridor: 'Jahangirpuri Flyover Ingress & Outer Ring Road, North Delhi',
-      actionDetails: 'High-reach mist cannon focused on flyover approach ramps to suppress suspended silt generated by heavy freight vehicles.',
-      equipmentSummary: '1x High-Reach Anti-Smog Cannon · 10,000L treated water',
-      preAqi: 330,
-      postAqi: 285,
-      metricLabel: 'PM10 Mass',
-      deltaLabel: '-45 AQI Points',
-      pctReduction: '-13.6%',
-      unit: 'AQI',
-      stableExplanation: 'Fine droplet mist formed effective dust containment barrier along elevated ramps.',
-      isDetailedAuditAvailable: false
-    },
-    {
-      id: 'govt_act_007',
-      title: 'Biochemical Dust Suppressant Spraying — Okhla Phase-II',
-      isEmergencyDirective: false,
-      category: 'FIELD_OPERATION',
-      interventionType: 'WATER_SUPPRESSION',
-      status: 'VERIFIED_IMPACT',
-      badgeLabel: 'Verified Measured Impact',
-      badgeVariant: 'emerald',
-      dateTimeLabel: '11 Oct 2026 · 10:00 – 11:00 IST',
-      locationCorridor: 'Okhla Phase-II Industrial Arterials, South-East Delhi',
-      actionDetails: 'Application of eco-friendly biochemical dust suppressant liquid over unpaved road shoulders and transit loops.',
-      equipmentSummary: '1x MCD Chemical Suppressant Tanker · 1.8 km road treatment',
-      preAqi: 315,
-      postAqi: 270,
-      metricLabel: 'Road Dust Resuspension',
-      deltaLabel: '-45 AQI Points',
-      pctReduction: '-14.3%',
-      unit: 'AQI',
-      stableExplanation: 'Polymer binder formed resilient crust suppressing truck-induced silt resuspension for over 6 hours.',
-      isDetailedAuditAvailable: false
-    },
-    {
-      id: 'govt_act_008',
-      title: 'Night Vacuum Sweeping — Connaught Place Outer Ring',
+      id: 'delhi_act_007',
+      stateCode: 'delhi',
+      title: 'Mechanical Night Vacuum Sweeping — Connaught Place Outer Circle',
       isEmergencyDirective: false,
       category: 'FIELD_OPERATION',
       interventionType: 'ROAD_SWEEPING',
       status: 'VERIFIED_IMPACT',
       badgeLabel: 'Verified Measured Impact',
       badgeVariant: 'emerald',
-      dateTimeLabel: '10 Oct 2026 · 02:00 – 04:30 IST',
-      locationCorridor: 'Connaught Place Outer Ring Road & Radial Avenues, Central Delhi',
-      actionDetails: 'Pre-dawn mechanical vacuum sweeping removing curb silt and debris before diurnal commercial traffic.',
-      equipmentSummary: '2x High-Efficiency Electric Mechanical Sweepers',
-      preAqi: 210,
-      postAqi: 180,
-      metricLabel: 'PM10 Mass',
-      deltaLabel: '-30 AQI Points',
-      pctReduction: '-14.3%',
+      dateTimeLabel: 'Night Shift · 23:00 – 01:30 IST',
+      locationCorridor: 'Connaught Place Radial Arterials & Ring, New Delhi',
+      actionDetails:
+        'Heavy mechanical sweeping with high-efficiency vacuum suction and micro-sprinklers to eliminate roadside silt deposition.',
+      equipmentSummary: '3x Mechanical Sweepers · High-efficiency vacuum dust containment',
+      preAqi: 280,
+      postAqi: 235,
+      metricLabel: 'PM10 & Road Dust',
+      preConcentration: 210.0,
+      postConcentration: 172.5,
+      deltaLabel: '-45 AQI Points (-37.5 µg/m³ PM10)',
+      pctReduction: '-16.1%',
+      unit: 'µg/m³',
+      stableExplanation:
+        'Pre-dawn sweep reduced resuspension particulate peak ahead of morning commute traffic.'
+    },
+
+    // =========================================================================
+    // 2. KARNATAKA (BENGALURU) ACTIONS & DIRECTIVES
+    // =========================================================================
+    {
+      id: 'kar_act_001',
+      stateCode: 'karnataka',
+      title: 'BBMP Construction & Demolition (C&D) Dust Mitigation Mandates',
+      isEmergencyDirective: true,
+      category: 'GOVERNMENT_DIRECTIVE',
+      interventionType: 'CIVIC_INFRASTRUCTURE',
+      status: 'POLICY_ACTIVE',
+      badgeLabel: 'Active NCAP Directive',
+      badgeVariant: 'rose',
+      dateTimeLabel: 'Mandatory NCAP Gazette Notification · BBMP & KSPCB',
+      locationCorridor: 'Greater Bengaluru Metropolitan Area (BBMP 8 Zones)',
+      actionDetails:
+        'Mandatory 35-ft green-net perimeter barricades around all construction sites >500 sqm, tarpaulin sheeting on all material transport trucks, and wet-jet cutting for stone/concrete under National Clean Air Programme.',
+      equipmentSummary: 'BBMP Ward Marshals & KSPCB Inspection Squads',
+      preAqi: 185,
+      postAqi: 148,
+      metricLabel: 'Coarse Dust Mass',
+      deltaLabel: '-37 AQI Points',
+      pctReduction: '-20.0%',
       unit: 'AQI',
-      stableExplanation: 'Clean asphalt surface prevented morning wind-whipped dust turbulence.',
-      isDetailedAuditAvailable: false
+      directiveHighlight:
+        'Non-compliance attracts stop-work notices and heavy environmental compensation penalties under KSPCB bylaws.',
+      stableExplanation:
+        'Strict barricade and truck covering enforcement lowered coarse particulate drift across major growth corridors.'
     },
     {
-      id: 'govt_act_009',
-      title: 'Mechanical Road Sweeping & Washing — Wazirpur Industrial Area',
-      isEmergencyDirective: false,
-      category: 'FIELD_OPERATION',
-      interventionType: 'ROAD_SWEEPING',
-      status: 'CONFOUNDED',
-      badgeLabel: 'Confounded (Rainfall Event)',
+      id: 'kar_act_002',
+      stateCode: 'karnataka',
+      title: 'KSPCB Regulated Deepavali Green-Cracker Statutory Window',
+      isEmergencyDirective: true,
+      category: 'GOVERNMENT_DIRECTIVE',
+      interventionType: 'EMISSION_ENFORCEMENT',
+      status: 'POLICY_ACTIVE',
+      badgeLabel: 'Restricted Window',
       badgeVariant: 'amber',
-      dateTimeLabel: '10 Oct 2026 · 14:00 – 14:45 IST',
-      locationCorridor: 'Wazirpur Industrial Ring Road, North-West Delhi',
-      actionDetails: 'Intensive mechanized sweeping and dust vacuuming conducted along metalwork cluster access roads.',
-      equipmentSummary: '3x Mechanical Sweepers & 1x Water Sprinkler tanker · 3.1 km corridor',
-      preAqi: 310,
-      postAqi: 218,
-      metricLabel: 'PM10 Mass',
-      deltaLabel: 'Attribution Inconclusive',
-      unit: 'µg/m³',
-      stableExplanation: 'Rainfall of 1.4 mm/h occurred at 14:20 IST during the post-action measurement window. Natural atmospheric precipitation washout masked localized street sweeping effects. Held as Confounded under standard evaluation rules.',
-      isDetailedAuditAvailable: false
+      dateTimeLabel: 'Statutory Order · 20:00 – 22:00 IST Window',
+      locationCorridor: 'Bengaluru Urban & Rural Districts',
+      actionDetails:
+        'Strictly restricted bursting window (8:00 PM – 10:00 PM) exclusively for CSIR-NEERI certified green crackers with verifiable QR codes. Total ban on joined crackers and barium compounds.',
+      equipmentSummary: 'Joint BBMP and Karnataka Police Flying Squads',
+      preAqi: 210,
+      postAqi: 165,
+      metricLabel: 'Episodic Peak Mitigation',
+      deltaLabel: '-45 AQI Points',
+      pctReduction: '-21.4%',
+      unit: 'AQI',
+      directiveHighlight:
+        'CSIR-NEERI certified green crackers exclusively. Uncertified barium fireworks strictly confiscated.',
+      stableExplanation:
+        'Limited evening window curtailed overnight heavy metal and smoke accumulation in valley basins.'
     },
     {
-      id: 'govt_act_010',
-      title: 'Construction Corridor Dust Control — Narela Industrial Zone',
+      id: 'kar_act_003',
+      stateCode: 'karnataka',
+      title: 'BBMP Mechanized Sweeping & 100% Recycled STP Mist Washing — Outer Ring Road',
       isEmergencyDirective: false,
       category: 'FIELD_OPERATION',
       interventionType: 'ROAD_SWEEPING',
-      status: 'UNMEASURED',
-      badgeLabel: 'Unmeasured (Data Gap)',
-      badgeVariant: 'slate',
-      dateTimeLabel: '11 Oct 2026 · 06:30 – 07:15 IST',
-      locationCorridor: 'Narela Phase-II Industrial Roads, North Delhi',
-      actionDetails: 'Boundary misting and perimeter wet sweeping near construction and raw material storage yards.',
-      equipmentSummary: '2x MCD Water Tankers with broad spray bars',
-      preAqi: 295,
-      postAqi: null,
-      metricLabel: 'PM2.5 / PM10',
-      deltaLabel: 'Sensor Coverage Gap',
-      unit: 'µg/m³',
-      stableExplanation: 'Insufficient Sensor Coverage: No mobile sensor buses or stationary monitoring stations recorded telemetry within 1.5 km of this corridor during the evaluation window. Held as Unmeasured to avoid false attribution.',
-      isDetailedAuditAvailable: false
+      status: 'VERIFIED_IMPACT',
+      badgeLabel: 'Verified Measured Impact',
+      badgeVariant: 'emerald',
+      dateTimeLabel: 'Continuous Night Operations · 22:00 – 04:00 IST',
+      locationCorridor: 'Outer Ring Road (Silk Board to Marathahalli & Bellandur Tech Corridor)',
+      actionDetails:
+        'Deployment of high-capacity mechanical vacuum sweepers and atomized mist cannons using 100% treated tertiary recycled STP wastewater along the dense tech corridor.',
+      equipmentSummary: '4x BBMP Heavy Vacuum Sweepers · 2x Mist Cannons · Recycled treated water',
+      preAqi: 195,
+      postAqi: 142,
+      metricLabel: 'Roadside PM10',
+      deltaLabel: '-53 AQI Points',
+      pctReduction: '-27.2%',
+      unit: 'AQI',
+      stableExplanation:
+        'Regular wash and sweep prevented continuous silt resuspension from heavy tech corridor vehicular density.'
+    },
+
+    // =========================================================================
+    // 3. MAHARASHTRA (MUMBAI) ACTIONS & DIRECTIVES
+    // =========================================================================
+    {
+      id: 'mah_act_001',
+      stateCode: 'maharashtra',
+      title: 'BMC Comprehensive Clean Air Guidelines (27-Point Action Plan)',
+      isEmergencyDirective: true,
+      category: 'GOVERNMENT_DIRECTIVE',
+      interventionType: 'CIVIC_INFRASTRUCTURE',
+      status: 'POLICY_ACTIVE',
+      badgeLabel: 'Statutory Mandate',
+      badgeVariant: 'rose',
+      dateTimeLabel: 'Enforced 24x7 · Municipal Commissioner Circular',
+      locationCorridor: 'All 24 BMC Administrative Wards (Mumbai City & Suburbs)',
+      actionDetails:
+        'Mandatory 35-ft perimeter barricades for construction sites >1 acre, automated vehicle tire-washing stations at egress, and sensor-fitted mist guns for all towers under construction exceeding 70m height.',
+      equipmentSummary: 'BMC Ward Enforcement Teams & MPCB Squads',
+      preAqi: 240,
+      postAqi: 188,
+      metricLabel: 'Coastal Micro-climate AQI',
+      deltaLabel: '-52 AQI Points',
+      pctReduction: '-21.7%',
+      unit: 'AQI',
+      directiveHighlight:
+        '27-point statutory protocol. Mandatory anti-smog guns on high-rise constructions over 70 meters.',
+      stableExplanation:
+        'Substantially curtailed fugitive dust plumes across Bandra-Kurla Complex and Lower Parel redevelopment zones.'
+    },
+    {
+      id: 'mah_act_002',
+      stateCode: 'maharashtra',
+      title: 'Western & Eastern Express Highway Nightly Mechanized Deep Cleaning',
+      isEmergencyDirective: false,
+      category: 'FIELD_OPERATION',
+      interventionType: 'ROAD_SWEEPING',
+      status: 'VERIFIED_IMPACT',
+      badgeLabel: 'Verified Measured Impact',
+      badgeVariant: 'emerald',
+      dateTimeLabel: 'Nightly Run · 00:30 – 04:30 IST',
+      locationCorridor: 'Western Express Highway (Bandra to Dahisar) & Eastern Express Highway',
+      actionDetails:
+        'High-capacity mechanized vacuum road sweepers combined with washed gravel scrubbing to eliminate vehicular dust re-suspension along Mumbai’s primary arterial transit corridors.',
+      equipmentSummary: '6x BMC Mechanical Sweepers · High-efficiency HEPA suction filters',
+      preAqi: 228,
+      postAqi: 175,
+      metricLabel: 'Highway Corridor AQI',
+      deltaLabel: '-53 AQI Points',
+      pctReduction: '-23.2%',
+      unit: 'AQI',
+      stableExplanation:
+        'Cleared over 18 metric tons of roadside silt nightly, curtailing morning rush-hour particulate spikes.'
+    },
+
+    // =========================================================================
+    // 4. UTTAR PRADESH (NOIDA / GHAZIABAD) ACTIONS & DIRECTIVES
+    // =========================================================================
+    {
+      id: 'up_act_001',
+      stateCode: 'uttar_pradesh',
+      title: 'UPPCB & CAQM Industrial Boiler Mandatory PNG / Biomass Conversion',
+      isEmergencyDirective: true,
+      category: 'GOVERNMENT_DIRECTIVE',
+      interventionType: 'EMISSION_ENFORCEMENT',
+      status: 'POLICY_ACTIVE',
+      badgeLabel: 'Statutory Mandate',
+      badgeVariant: 'rose',
+      dateTimeLabel: 'Strict Enforcement · UPPCB & CAQM Directive',
+      locationCorridor: 'Gautam Buddha Nagar (Noida/Gr. Noida) & Ghaziabad Industrial Clusters',
+      actionDetails:
+        'Mandatory transition of all industrial boilers to approved clean fuels (PNG or biomass pellets). Immediate sealing and penal action against unauthorized coal, plastic, or industrial scrap combustion.',
+      equipmentSummary: 'UPPCB Flying Squads & District Administration Task Force',
+      preAqi: 365,
+      postAqi: 295,
+      metricLabel: 'Industrial Cluster AQI',
+      deltaLabel: '-70 AQI Points',
+      pctReduction: '-19.2%',
+      unit: 'AQI',
+      directiveHighlight:
+        'Zero-tolerance policy on unapproved industrial fuels with immediate electricity disconnection for non-compliant units.',
+      stableExplanation:
+        'Sulfur dioxide and heavy industrial smoke plumes drastically reduced across Sahibabad and Sector 63 clusters.'
+    },
+    {
+      id: 'up_act_002',
+      stateCode: 'uttar_pradesh',
+      title: 'Noida Authority Mechanized Sweeping & Anti-Smog Gun Encampment',
+      isEmergencyDirective: false,
+      category: 'FIELD_OPERATION',
+      interventionType: 'WATER_SUPPRESSION',
+      status: 'VERIFIED_IMPACT',
+      badgeLabel: 'Verified Measured Impact',
+      badgeVariant: 'emerald',
+      dateTimeLabel: 'Continuous Operations · 08:00 – 17:00 IST',
+      locationCorridor: 'Noida-Greater Noida Expressway, Sector 62 IT Corridor & Dadri Road',
+      actionDetails:
+        'Continuous deployment of vehicle-mounted anti-smog guns and mechanical road sweepers along high-traffic expressways to suppress dust from construction and transit vehicles.',
+      equipmentSummary: '4x Noida Authority Heavy Mist Guns · 3x Mechanical Vacuum Sweepers',
+      preAqi: 342,
+      postAqi: 285,
+      metricLabel: 'Expressway Ambient AQI',
+      deltaLabel: '-57 AQI Points',
+      pctReduction: '-16.7%',
+      unit: 'AQI',
+      stableExplanation:
+        'Mist curtains suppressed vehicular dust re-suspension along the 24 km expressway stretch.'
     }
   ];
 
-  const filteredActions = actionsList.filter((item) => {
+  // Filter actions for selected state
+  const stateActions = ALL_ACTIONS.filter((a) => a.stateCode === selectedState);
+
+  // Filter by category
+  const filteredActions = stateActions.filter((item) => {
     if (selectedFilter === 'ALL') return true;
     if (selectedFilter === 'EMERGENCY_DIRECTIVES') return item.isEmergencyDirective;
     if (selectedFilter === 'VERIFIED_IMPACT') return item.status === 'VERIFIED_IMPACT';
@@ -315,6 +480,9 @@ export const GovernmentActionsRegistry: React.FC<GovernmentActionsRegistryProps>
     return true;
   });
 
+  const activeDirectivesCount = stateActions.filter((a) => a.isEmergencyDirective).length;
+  const verifiedCount = stateActions.filter((a) => a.status === 'VERIFIED_IMPACT').length;
+
   return (
     <div className="space-y-6">
       {/* 1. Quick Stats Header Strip */}
@@ -322,26 +490,18 @@ export const GovernmentActionsRegistry: React.FC<GovernmentActionsRegistryProps>
         <div className="flex items-center gap-2">
           <Layers className="w-4 h-4 text-slate-600" />
           <span className="text-xs font-bold uppercase tracking-wider text-slate-800">
-            Delhi Clean Air Action Registry ({filteredActions.length} Actions)
+            {currentRegion.name} Clean Air Registry ({stateActions.length} Operations)
           </span>
         </div>
 
         <div className="flex items-center gap-2 text-xs font-semibold text-slate-600 flex-wrap">
           <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-rose-50 text-rose-800 border border-rose-200">
             <span className="w-2 h-2 rounded-full bg-rose-600 animate-pulse"></span>
-            2 Active Directives
+            {activeDirectivesCount} Active Directives
           </span>
           <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-emerald-50 text-emerald-800 border border-emerald-200">
             <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600" />
-            6 Verified Impacts
-          </span>
-          <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-amber-50 text-amber-800 border border-amber-200">
-            <AlertTriangle className="w-3.5 h-3.5 text-amber-600" />
-            1 Confounded
-          </span>
-          <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-slate-100 text-slate-700 border border-slate-200">
-            <HelpCircle className="w-3.5 h-3.5 text-slate-500" />
-            1 Data Gap
+            {verifiedCount} Verified Impacts
           </span>
         </div>
       </div>
@@ -349,11 +509,11 @@ export const GovernmentActionsRegistry: React.FC<GovernmentActionsRegistryProps>
       {/* 2. Interactive Category Filter Bar */}
       <div className="flex items-center gap-1.5 overflow-x-auto pb-1">
         {[
-          { id: 'ALL', label: 'All Actions (10)' },
-          { id: 'EMERGENCY_DIRECTIVES', label: '🚨 Active Civic Directives (3)' },
-          { id: 'VERIFIED_IMPACT', label: '✅ Verified Field Impacts (6)' },
-          { id: 'MIST_SUPPRESSION', label: '💧 Water & Mist Cannons (4)' },
-          { id: 'ROAD_SWEEPING', label: '🧹 Mechanical Sweeping (2)' }
+          { id: 'ALL', label: `All Actions (${stateActions.length})` },
+          { id: 'EMERGENCY_DIRECTIVES', label: `🚨 Active Directives (${activeDirectivesCount})` },
+          { id: 'VERIFIED_IMPACT', label: `✅ Verified Impacts (${verifiedCount})` },
+          { id: 'MIST_SUPPRESSION', label: '💧 Water & Mist Cannons' },
+          { id: 'ROAD_SWEEPING', label: '🧹 Mechanical Sweeping' }
         ].map((tab) => (
           <button
             key={tab.id}
@@ -369,194 +529,154 @@ export const GovernmentActionsRegistry: React.FC<GovernmentActionsRegistryProps>
         ))}
       </div>
 
-      {/* 3. Unified Action Cards (Directives + Before/After AQI in same card, active emergency measures on top) */}
+      {/* 3. Unified Action Cards */}
       <div className="space-y-4">
-        {filteredActions.map((action) => {
-          const isExpanded = expandedActionId === action.id;
-          const hasReduction = action.postAqi !== null && action.postAqi < action.preAqi;
-          const deltaAqi = action.postAqi !== null ? action.preAqi - action.postAqi : null;
+        {filteredActions.length === 0 ? (
+          <div className="bg-white border border-slate-200 rounded-2xl p-10 text-center space-y-2">
+            <AlertTriangle className="w-6 h-6 text-slate-400 mx-auto" />
+            <p className="text-sm font-bold text-slate-700">No operations found for this category</p>
+            <p className="text-xs text-slate-500">
+              Try switching filters or selecting a different state.
+            </p>
+          </div>
+        ) : (
+          filteredActions.map((action) => {
+            const isExpanded = expandedActionId === action.id;
+            const hasReduction = action.postAqi !== null && action.postAqi < action.preAqi;
+            const deltaAqi = action.postAqi !== null ? action.preAqi - action.postAqi : null;
 
-          return (
-            <div
-              key={action.id}
-              className={`bg-white border rounded-2xl transition-all shadow-xs overflow-hidden ${
-                action.isEmergencyDirective
-                  ? 'border-rose-200 ring-1 ring-rose-100 hover:border-rose-300'
-                  : action.status === 'VERIFIED_IMPACT'
-                  ? 'border-emerald-200 hover:border-emerald-300'
-                  : action.status === 'CONFOUNDED'
-                  ? 'border-amber-200 hover:border-amber-300'
-                  : 'border-slate-200 hover:border-slate-300'
-              }`}
-            >
-              {/* Header / Summary Bar */}
+            return (
               <div
-                onClick={() => setExpandedActionId(isExpanded ? null : action.id)}
-                className="p-5 cursor-pointer flex flex-col lg:flex-row lg:items-center justify-between gap-4 select-none hover:bg-slate-50/50 transition-colors"
+                key={action.id}
+                className={`bg-white border rounded-2xl transition-all shadow-xs overflow-hidden ${
+                  action.isEmergencyDirective
+                    ? 'border-rose-200 ring-1 ring-rose-100 hover:border-rose-300'
+                    : action.status === 'VERIFIED_IMPACT'
+                    ? 'border-emerald-200 hover:border-emerald-300'
+                    : 'border-slate-200 hover:border-slate-300'
+                }`}
               >
-                <div className="space-y-2 flex-1">
-                  <div className="flex flex-wrap items-center gap-2">
-                    {/* Badge */}
-                    {action.isEmergencyDirective ? (
-                      <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-rose-100 text-rose-900 border border-rose-300">
-                        <Flame className="w-3.5 h-3.5 text-rose-600" />
-                        {action.badgeLabel}
-                      </span>
-                    ) : action.status === 'VERIFIED_IMPACT' ? (
-                      <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-emerald-100 text-emerald-800 border border-emerald-300">
-                        <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600" />
-                        {action.badgeLabel}
-                      </span>
-                    ) : action.status === 'CONFOUNDED' ? (
-                      <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-amber-100 text-amber-900 border border-amber-300">
-                        <AlertTriangle className="w-3.5 h-3.5 text-amber-700" />
-                        {action.badgeLabel}
-                      </span>
-                    ) : (
-                      <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-slate-100 text-slate-700 border border-slate-300">
-                        <HelpCircle className="w-3.5 h-3.5 text-slate-500" />
-                        {action.badgeLabel}
-                      </span>
-                    )}
-
-                    {/* Date/Time */}
-                    <span className="text-[11px] font-medium text-slate-500 flex items-center gap-1">
-                      <Clock className="w-3 h-3 text-slate-400" />
-                      {action.dateTimeLabel}
-                    </span>
-                  </div>
-
-                  <h3 className="text-base font-bold text-slate-950 tracking-tight flex items-center gap-2">
-                    {action.title}
-                  </h3>
-
-                  <p className="text-xs text-slate-600 font-medium">
-                    📍 {action.locationCorridor}
-                  </p>
-
-                  {/* Directive highlight pill if emergency directive */}
-                  {action.directiveHighlight && (
-                    <div className="text-xs font-medium text-rose-900 bg-rose-50/80 px-3 py-1.5 rounded-xl border border-rose-200/80 max-w-3xl">
-                      {action.directiveHighlight}
-                    </div>
-                  )}
-                </div>
-
-                {/* Pre vs Post AQI Impact Pill (Combined in the same card) */}
-                <div className="flex items-center gap-3 shrink-0">
-                  <div className="bg-slate-50 border border-slate-200 rounded-2xl p-3 flex items-center gap-3">
-                    {/* Before AQI */}
-                    <div className="text-center px-2">
-                      <div className="text-[10px] uppercase font-bold text-slate-400">Before</div>
-                      <div className="text-base font-black font-mono text-slate-900">
-                        {action.preAqi} <span className="text-[10px] font-normal text-slate-500">AQI</span>
-                      </div>
-                      {action.preConcentration && (
-                        <div className="text-[10px] font-mono text-slate-500">
-                          {action.preConcentration} {action.unit}
-                        </div>
-                      )}
-                    </div>
-
-                    <ArrowRight className="w-4 h-4 text-slate-400 shrink-0" />
-
-                    {/* After AQI */}
-                    <div className="text-center px-2">
-                      <div className="text-[10px] uppercase font-bold text-slate-400">After</div>
-                      {action.postAqi !== null ? (
-                        <>
-                          <div className={`text-base font-black font-mono ${hasReduction ? 'text-emerald-700' : 'text-slate-900'}`}>
-                            {action.postAqi} <span className="text-[10px] font-normal text-slate-500">AQI</span>
-                          </div>
-                          {action.pctReduction && (
-                            <div className="text-[10px] font-mono text-emerald-600 font-bold">
-                              {action.pctReduction}
-                            </div>
-                          )}
-                        </>
+                {/* Header / Summary Bar */}
+                <div
+                  onClick={() => setExpandedActionId(isExpanded ? null : action.id)}
+                  className="p-5 cursor-pointer flex flex-col lg:flex-row lg:items-center justify-between gap-4 select-none hover:bg-slate-50/50 transition-colors"
+                >
+                  <div className="space-y-2 flex-1">
+                    <div className="flex flex-wrap items-center gap-2">
+                      {action.isEmergencyDirective ? (
+                        <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-rose-100 text-rose-900 border border-rose-300">
+                          <Flame className="w-3.5 h-3.5 text-rose-600" />
+                          {action.badgeLabel}
+                        </span>
+                      ) : action.status === 'VERIFIED_IMPACT' ? (
+                        <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-emerald-100 text-emerald-800 border border-emerald-300">
+                          <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600" />
+                          {action.badgeLabel}
+                        </span>
                       ) : (
-                        <div className="text-xs font-bold text-slate-500 italic">
-                          Unmeasured
-                        </div>
+                        <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-purple-100 text-purple-800 border border-purple-300">
+                          <ShieldCheck className="w-3.5 h-3.5 text-purple-600" />
+                          {action.badgeLabel}
+                        </span>
                       )}
+
+                      <span className="text-[11px] font-medium text-slate-500 flex items-center gap-1">
+                        <Clock className="w-3 h-3 text-slate-400" />
+                        {action.dateTimeLabel}
+                      </span>
                     </div>
 
-                    {/* Net Delta Badge */}
-                    {deltaAqi !== null && (
-                      <div className="hidden sm:block border-l border-slate-200 pl-3 text-right">
-                        <div className="text-[10px] uppercase font-bold text-emerald-700">Net Drop</div>
-                        <div className="text-sm font-black font-mono text-emerald-700 flex items-center gap-0.5 justify-end">
-                          <TrendingDown className="w-3.5 h-3.5" />
-                          <span>-{deltaAqi}</span>
-                        </div>
+                    <h3 className="text-base font-bold text-slate-950 tracking-tight">
+                      {action.title}
+                    </h3>
+
+                    <p className="text-xs text-slate-600 font-medium flex items-center gap-1">
+                      <MapPin className="w-3.5 h-3.5 text-slate-400" />
+                      <span>{action.locationCorridor}</span>
+                    </p>
+
+                    {action.directiveHighlight && (
+                      <div className="text-xs font-medium text-rose-900 bg-rose-50/80 px-3 py-1.5 rounded-xl border border-rose-200/80 max-w-3xl">
+                        {action.directiveHighlight}
                       </div>
                     )}
                   </div>
 
-                  <ChevronRight
-                    className={`w-5 h-5 text-slate-400 transition-transform ${
-                      isExpanded ? 'rotate-90' : ''
-                    }`}
-                  />
-                </div>
-              </div>
-
-              {/* Expanded Card Details */}
-              {isExpanded && (
-                <div className="px-5 pb-5 pt-1 border-t border-slate-100 space-y-4 bg-slate-50/40">
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-xs">
-                    {/* Left: Action & Directive Specs */}
-                    <div className="bg-white p-4 rounded-xl border border-slate-200 shadow-xs space-y-2">
-                      <div className="font-bold text-slate-900 flex items-center gap-1.5">
-                        <Droplets className="w-4 h-4 text-sky-600" />
-                        <span>Action & Equipment Details</span>
-                      </div>
-                      <p className="text-slate-700 leading-relaxed">
-                        {action.actionDetails}
-                      </p>
-                      <div className="text-[11px] text-slate-600 bg-slate-50 p-2.5 rounded-lg border border-slate-100 font-medium">
-                        <strong>Deployment:</strong> {action.equipmentSummary}
-                      </div>
-                    </div>
-
-                    {/* Right: Measured Impact & Explanation */}
-                    <div className="bg-white p-4 rounded-xl border border-slate-200 shadow-xs space-y-2">
-                      <div className="font-bold text-slate-900 flex items-center gap-1.5">
-                        <Sparkles className="w-4 h-4 text-emerald-600" />
-                        <span>Verified Air Impact & Scientific Context</span>
+                  {/* Pre vs Post AQI Impact Pill */}
+                  <div className="flex items-center gap-3 shrink-0">
+                    <div className="bg-slate-50 border border-slate-200 rounded-2xl p-3 flex items-center gap-3">
+                      <div className="text-center px-2">
+                        <div className="text-[10px] uppercase font-bold text-slate-400">Before</div>
+                        <div className="text-lg font-mono font-bold text-slate-700">
+                          {action.preAqi}
+                        </div>
                       </div>
 
-                      {action.deltaLabel && (
-                        <div className="flex items-center justify-between text-xs font-bold pb-1">
-                          <span className="text-slate-600">Measured Delta:</span>
-                          <span className="text-emerald-700 font-mono text-sm bg-emerald-50 px-2 py-0.5 rounded border border-emerald-200">
+                      <ArrowRight className="w-4 h-4 text-slate-400" />
+
+                      <div className="text-center px-2">
+                        <div className="text-[10px] uppercase font-bold text-slate-400">After</div>
+                        <div className="text-lg font-mono font-bold text-emerald-700">
+                          {action.postAqi !== null ? action.postAqi : '—'}
+                        </div>
+                      </div>
+
+                      {hasReduction && (
+                        <div className="pl-2 border-l border-slate-200 flex flex-col items-end">
+                          <span className="text-xs font-bold text-emerald-700 flex items-center gap-1">
+                            <TrendingDown className="w-3.5 h-3.5" />
+                            {action.pctReduction}
+                          </span>
+                          <span className="text-[10px] font-mono text-slate-500">
                             {action.deltaLabel}
                           </span>
                         </div>
                       )}
-
-                      <p className="text-[11px] text-slate-700 leading-relaxed bg-slate-50 p-2.5 rounded-lg border border-slate-100">
-                        {action.stableExplanation}
-                      </p>
-
-                      {action.isDetailedAuditAvailable && onInspectInterventionAudit && (
-                        <div className="pt-2">
-                          <button
-                            onClick={() => onInspectInterventionAudit(action.id)}
-                            className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-emerald-700 hover:bg-emerald-800 text-white text-xs font-bold shadow-xs transition cursor-pointer"
-                          >
-                            <span>Inspect Sensor Audit Timeline</span>
-                            <ExternalLink className="w-3.5 h-3.5" />
-                          </button>
-                        </div>
-                      )}
                     </div>
+
+                    <ChevronRight
+                      className={`w-5 h-5 text-slate-400 transition-transform ${
+                        isExpanded ? 'rotate-90' : ''
+                      }`}
+                    />
                   </div>
                 </div>
-              )}
-            </div>
-          );
-        })}
+
+                {/* Expanded Details Drawer */}
+                {isExpanded && (
+                  <div className="p-5 border-t border-slate-100 bg-slate-50/50 space-y-3 animate-in fade-in duration-100">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <div>
+                        <div className="text-[10px] uppercase font-bold text-slate-500 tracking-wider">
+                          Official Scope & Directives
+                        </div>
+                        <p className="text-xs text-slate-700 mt-1 leading-relaxed">
+                          {action.actionDetails}
+                        </p>
+                      </div>
+
+                      <div>
+                        <div className="text-[10px] uppercase font-bold text-slate-500 tracking-wider">
+                          Deployed Equipment & Logistics
+                        </div>
+                        <p className="text-xs text-slate-700 mt-1 leading-relaxed">
+                          {action.equipmentSummary}
+                        </p>
+                      </div>
+                    </div>
+
+                    {action.stableExplanation && (
+                      <div className="p-3 rounded-xl bg-white border border-slate-200 text-xs text-slate-700 leading-relaxed">
+                        <strong className="text-slate-900">Verified Empirical Outcome: </strong>
+                        {action.stableExplanation}
+                      </div>
+                    )}
+                  </div>
+                )}
+              </div>
+            );
+          })
+        )}
       </div>
     </div>
   );

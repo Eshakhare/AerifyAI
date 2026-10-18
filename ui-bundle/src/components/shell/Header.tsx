@@ -4,32 +4,32 @@
  *
  * Aerify AI - Top Header Bar
  * Spans adjacent to the full-height left navigation sidebar.
- * Displays contextual breadcrumbs, municipal officer authentication trigger,
- * and user profile menu with demo role switching.
+ * Displays contextual breadcrumbs and a unified authentication trigger / user profile menu.
  */
 
 import React, { useState, useRef, useEffect } from 'react';
 import {
-  Shield,
   Menu,
   ChevronDown,
   User,
   LogOut,
-  Sliders,
   CheckCircle2,
-  Lock,
-  Layers,
-  Sparkles,
-  ShieldAlert
+  Shield,
+  Building2,
+  LogIn
 } from 'lucide-react';
-import { SessionInfo, Role } from '../../contracts/types';
+import { SessionInfo, Role, AuthUser } from '../../contracts/types';
 import { NavTab } from './Sidebar';
 
 interface HeaderProps {
   currentTab: NavTab;
   activeDistrictName?: string | null;
   session: SessionInfo | null;
+  authUser?: AuthUser | null;
+  googleUser?: { displayName?: string | null; email?: string | null; photoURL?: string | null } | null;
   onOpenAuthModal: () => void;
+  onGoogleSignIn?: () => void;
+  onGoogleSignOut?: () => void;
   onRoleChange: (newRole: Role) => void;
   onToggleMobileMenu: () => void;
   isDevModeEnabled: boolean;
@@ -41,11 +41,10 @@ export const Header: React.FC<HeaderProps> = ({
   currentTab,
   activeDistrictName,
   session,
+  authUser,
+  googleUser,
   onOpenAuthModal,
-  onRoleChange,
   onToggleMobileMenu,
-  isDevModeEnabled,
-  onToggleDevMode,
   onSignOut
 }) => {
   const [profileOpen, setProfileOpen] = useState(false);
@@ -84,8 +83,66 @@ export const Header: React.FC<HeaderProps> = ({
   };
 
   const breadcrumbs = getBreadcrumbLabel();
-  const isOfficerOrSupervisor =
-    session?.role === 'OFFICER' || session?.role === 'SUPERVISOR';
+
+  // Determine current active user info
+  const effectiveUser = authUser || (googleUser ? {
+    uid: 'google_user',
+    email: googleUser.email || null,
+    displayName: googleUser.displayName || 'Delhi Citizen',
+    photoURL: googleUser.photoURL || null,
+    role: session?.role || 'PUBLIC',
+    provider: 'google' as const
+  } : null);
+
+  // User is considered logged in if effectiveUser exists OR session has an elevated role (OFFICER / SUPERVISOR)
+  const isLoggedIn = Boolean(
+    effectiveUser ||
+    (session && session.role !== 'PUBLIC')
+  );
+
+  const userRole: Role = effectiveUser?.role || session?.role || 'PUBLIC';
+  const displayName = effectiveUser?.displayName || (
+    userRole === 'SUPERVISOR'
+      ? 'Dr. Sunita Rao'
+      : userRole === 'OFFICER'
+      ? 'Esha Khare'
+      : session?.display_name || 'Delhi Citizen'
+  );
+  const email = effectiveUser?.email || (
+    userRole === 'SUPERVISOR'
+      ? 'supervisor@dpcc.delhi.gov.in'
+      : userRole === 'OFFICER'
+      ? 'esha.khare@mcd.delhi.gov.in'
+      : 'citizen@delhi.in'
+  );
+  const photoURL = effectiveUser?.photoURL;
+
+  const getRoleBadge = () => {
+    if (userRole === 'SUPERVISOR') {
+      return {
+        label: 'DPCC Supervisor',
+        badgeClass: 'bg-indigo-50 text-indigo-800 border-indigo-200',
+        dotClass: 'bg-indigo-600',
+        avatarBg: 'bg-indigo-600'
+      };
+    }
+    if (userRole === 'OFFICER') {
+      return {
+        label: 'MCD Field Officer',
+        badgeClass: 'bg-sky-50 text-sky-800 border-sky-200',
+        dotClass: 'bg-sky-600',
+        avatarBg: 'bg-sky-600'
+      };
+    }
+    return {
+      label: 'Verified Citizen',
+      badgeClass: 'bg-emerald-50 text-emerald-800 border-emerald-200',
+      dotClass: 'bg-emerald-600',
+      avatarBg: 'bg-emerald-600'
+    };
+  };
+
+  const roleMeta = getRoleBadge();
 
   return (
     <header className="h-16 bg-white/95 backdrop-blur-md border-b border-slate-200/90 px-4 md:px-6 flex items-center justify-between sticky top-0 z-30 shadow-2xs">
@@ -115,32 +172,33 @@ export const Header: React.FC<HeaderProps> = ({
       </div>
 
       {/* Right: Authentication or User Profile Menu */}
-      <div className="flex items-center gap-3">
-        {!isOfficerOrSupervisor ? (
-          <button
-            onClick={onOpenAuthModal}
-            className="flex items-center gap-2 px-3.5 py-2 rounded-xl bg-slate-900 hover:bg-slate-800 text-white text-xs font-bold shadow-xs transition-colors focus:ring-2 focus:ring-sky-500"
-          >
-            <Shield className="w-4 h-4 text-sky-400" />
-            <span>Municipal Officer Sign In</span>
-          </button>
-        ) : (
+      <div className="flex items-center gap-2.5">
+        {isLoggedIn ? (
           <div className="relative" ref={dropdownRef}>
             <button
               onClick={() => setProfileOpen(!profileOpen)}
-              className="flex items-center gap-2.5 p-1.5 pl-2.5 rounded-xl border border-slate-200 hover:border-slate-300 hover:bg-slate-50 transition-colors focus:ring-2 focus:ring-sky-500"
+              className="flex items-center gap-2.5 p-1.5 pl-2.5 rounded-xl border border-slate-200 hover:border-slate-300 hover:bg-slate-50 transition-colors focus:ring-2 focus:ring-sky-500 cursor-pointer"
             >
-              <div className="w-7 h-7 rounded-lg bg-sky-600 text-white font-bold text-xs flex items-center justify-center shadow-xs">
-                {session.role === 'SUPERVISOR' ? 'S' : 'O'}
-              </div>
+              {photoURL ? (
+                <img
+                  src={photoURL}
+                  alt={displayName}
+                  className="w-7 h-7 rounded-lg object-cover border border-slate-200 shadow-2xs"
+                  referrerPolicy="no-referrer"
+                />
+              ) : (
+                <div
+                  className={`w-7 h-7 rounded-lg ${roleMeta.avatarBg} text-white font-bold text-xs flex items-center justify-center shadow-xs`}
+                >
+                  {displayName.charAt(0).toUpperCase()}
+                </div>
+              )}
               <div className="text-left hidden sm:block">
                 <div className="text-xs font-bold text-slate-900 leading-tight">
-                  {session.role === 'SUPERVISOR' ? 'Dr. Sunita Rao' : 'Esha Khare'}
+                  {displayName}
                 </div>
                 <div className="text-[10px] text-slate-500 font-medium">
-                  {session.role === 'SUPERVISOR'
-                    ? 'DPCC Environmental Supervisor'
-                    : 'MCD Central Zone Officer'}
+                  {roleMeta.label}
                 </div>
               </div>
               <ChevronDown className="w-3.5 h-3.5 text-slate-400 ml-1" />
@@ -149,107 +207,42 @@ export const Header: React.FC<HeaderProps> = ({
             {/* Profile Dropdown Menu */}
             {profileOpen && (
               <div className="absolute right-0 mt-2 w-72 bg-white rounded-2xl border border-slate-200 shadow-xl p-3.5 space-y-3 z-50 text-slate-800 animate-in fade-in duration-100">
-                {/* User Details */}
-                <div className="border-b border-slate-100 pb-2.5">
-                  <div className="text-xs font-extrabold text-slate-950">
-                    {session.role === 'SUPERVISOR' ? 'Dr. Sunita Rao' : 'Esha Khare'}
+                <div className="pb-1 border-b border-slate-100">
+                  <div className="text-xs font-extrabold text-slate-950 flex items-center gap-1.5">
+                    <span>{displayName}</span>
                   </div>
-                  <div className="text-[11px] text-slate-500 font-medium mt-0.5">
-                    {session.role === 'SUPERVISOR'
-                      ? 'DPCC Environmental Science Division'
-                      : 'MCD Central Zone Municipal Operations'}
+                  <div className="text-[11px] text-slate-500 font-medium mt-0.5 font-mono truncate">
+                    {email}
                   </div>
-                  <div className="mt-2 inline-flex items-center gap-1.5 px-2 py-0.5 rounded-md text-[10px] font-bold bg-sky-50 text-sky-800 border border-sky-200">
-                    <CheckCircle2 className="w-3 h-3 text-sky-600" />
-                    <span>Active Role: {session.role}</span>
+                  <div className={`mt-2 inline-flex items-center gap-1.5 px-2 py-0.5 rounded-md text-[10px] font-bold border ${roleMeta.badgeClass}`}>
+                    <CheckCircle2 className="w-3 h-3" />
+                    <span>Verified {roleMeta.label}</span>
                   </div>
                 </div>
 
-                {/* Interactive Demo Role Switcher */}
-                <div className="space-y-1.5">
-                  <div className="text-[10px] font-bold uppercase tracking-wider text-slate-400">
-                    Demo Role Switcher
-                  </div>
-                  <div className="grid grid-cols-1 gap-1">
-                    <button
-                      onClick={() => {
-                        onRoleChange('PUBLIC');
-                        setProfileOpen(false);
-                      }}
-                      className={`w-full text-left px-2.5 py-1.5 rounded-lg text-xs font-medium transition-colors flex items-center justify-between ${
-                        session.role === 'PUBLIC'
-                          ? 'bg-slate-100 text-slate-950 font-bold'
-                          : 'text-slate-600 hover:bg-slate-50'
-                      }`}
-                    >
-                      <span>Public Citizen</span>
-                      {session.role === 'PUBLIC' && <CheckCircle2 className="w-3.5 h-3.5 text-sky-600" />}
-                    </button>
-
-                    <button
-                      onClick={() => {
-                        onRoleChange('OFFICER');
-                        setProfileOpen(false);
-                      }}
-                      className={`w-full text-left px-2.5 py-1.5 rounded-lg text-xs font-medium transition-colors flex items-center justify-between ${
-                        session.role === 'OFFICER'
-                          ? 'bg-sky-50 text-sky-900 font-bold'
-                          : 'text-slate-600 hover:bg-slate-50'
-                      }`}
-                    >
-                      <span>Municipal Officer (MCD)</span>
-                      {session.role === 'OFFICER' && <CheckCircle2 className="w-3.5 h-3.5 text-sky-600" />}
-                    </button>
-
-                    <button
-                      onClick={() => {
-                        onRoleChange('SUPERVISOR');
-                        setProfileOpen(false);
-                      }}
-                      className={`w-full text-left px-2.5 py-1.5 rounded-lg text-xs font-medium transition-colors flex items-center justify-between ${
-                        session.role === 'SUPERVISOR'
-                          ? 'bg-indigo-50 text-indigo-900 font-bold'
-                          : 'text-slate-600 hover:bg-slate-50'
-                      }`}
-                    >
-                      <span>Environmental Supervisor</span>
-                      {session.role === 'SUPERVISOR' && <CheckCircle2 className="w-3.5 h-3.5 text-indigo-600" />}
-                    </button>
-                  </div>
-                </div>
-
-                {/* Dev Mode UI Toggle */}
-                <div className="border-t border-slate-100 pt-2.5">
-                  <label className="flex items-center justify-between cursor-pointer text-xs font-medium text-slate-700">
-                    <div className="flex items-center gap-2">
-                      <Sliders className="w-3.5 h-3.5 text-slate-400" />
-                      <span>Dev Component Showcase</span>
-                    </div>
-                    <input
-                      type="checkbox"
-                      checked={isDevModeEnabled}
-                      onChange={onToggleDevMode}
-                      className="rounded text-sky-600 focus:ring-sky-500 h-4 w-4"
-                    />
-                  </label>
-                </div>
-
-                {/* Sign Out Action */}
-                <div className="border-t border-slate-100 pt-2">
+                <div className="pt-1">
                   <button
                     onClick={() => {
-                      onSignOut();
                       setProfileOpen(false);
+                      onSignOut();
                     }}
-                    className="w-full flex items-center gap-2 px-2.5 py-1.5 rounded-lg text-xs font-semibold text-rose-700 hover:bg-rose-50 transition-colors"
+                    className="w-full flex items-center gap-2 px-2.5 py-1.5 rounded-lg text-xs font-semibold text-rose-700 hover:bg-rose-50 transition-colors cursor-pointer"
                   >
                     <LogOut className="w-3.5 h-3.5 text-rose-500" />
-                    <span>Sign Out (Return to Citizen View)</span>
+                    <span>Sign Out</span>
                   </button>
                 </div>
               </div>
             )}
           </div>
+        ) : (
+          <button
+            onClick={onOpenAuthModal}
+            className="flex items-center gap-2 px-3.5 py-2 rounded-xl bg-slate-900 hover:bg-slate-800 text-white text-xs font-bold shadow-xs transition-colors focus:ring-2 focus:ring-sky-500 cursor-pointer"
+          >
+            <LogIn className="w-3.5 h-3.5 text-sky-400" />
+            <span>Sign In</span>
+          </button>
         )}
       </div>
     </header>

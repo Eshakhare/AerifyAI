@@ -35,8 +35,8 @@ import {
 
 export class HttpApi implements ApiClient {
   private baseUrl: string;
-  private activeRole: Role = 'OFFICER';
-  private activeUserEmail: string | null = 'esha.khare@mcd.delhi.gov.in';
+  private activeRole: Role = 'PUBLIC';
+  private activeUserEmail: string | null = null;
   private bearerToken: string | null = null;
 
   constructor(baseUrl: string = (import.meta as any).env?.VITE_API_BASE_URL || '/v1') {

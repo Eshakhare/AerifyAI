@@ -51,7 +51,7 @@ import legendBandsFixture from '../contracts/fixtures/legend-bands.v1.json';
 import scenarioCatalogFixture from '../contracts/fixtures/scenario-catalog.v1.json';
 
 export class FixtureApi implements ApiClient {
-  private currentRole: Role = (sessionOfficerFixture.role as Role) || 'OFFICER';
+  private currentRole: Role = 'PUBLIC';
   private sessionAuthMode: 'FIREBASE' | 'FIXTURE' = 'FIXTURE';
   
   // In-memory clones to support mutations during testing
@@ -1209,7 +1209,11 @@ export class FixtureApi implements ApiClient {
   }): Promise<SessionInfo> {
     const role: Role =
       payload.requested_role ||
-      (payload.email?.includes('dpcc') || payload.email?.includes('supervisor') ? 'SUPERVISOR' : 'OFFICER');
+      (payload.email?.includes('dpcc') || payload.email?.includes('supervisor')
+        ? 'SUPERVISOR'
+        : payload.email?.includes('mcd') || payload.email?.includes('officer')
+        ? 'OFFICER'
+        : 'PUBLIC');
     this.setFixtureRole(role);
     const me = await this.getMe();
     return {
@@ -1218,7 +1222,7 @@ export class FixtureApi implements ApiClient {
       display_name: payload.display_name || payload.email || me.display_name,
       user: {
         firebase_uid: payload.firebase_uid || `uid_${payload.email || role.toLowerCase()}`,
-        email: payload.email || `${role.toLowerCase()}@mcd.delhi.gov.in`,
+        email: payload.email || (role === 'PUBLIC' ? 'citizen@delhi.in' : `${role.toLowerCase()}@mcd.delhi.gov.in`),
         role,
         active: true,
         actor_ref: `actor_${role.toLowerCase()}_01`,
@@ -1226,7 +1230,9 @@ export class FixtureApi implements ApiClient {
         department:
           role === 'SUPERVISOR'
             ? 'Delhi Pollution Control Committee (DPCC)'
-            : 'Municipal Corporation of Delhi (MCD)'
+            : role === 'OFFICER'
+            ? 'Municipal Corporation of Delhi (MCD)'
+            : 'Delhi Civic Citizen Network'
       }
     };
   }

@@ -1,28 +1,29 @@
-# Aerify AI: shared architecture (validated hybrid design)
+# Aerify AI: shared architecture (Google-Native Environmental Architecture)
 
 
-**Revision:** 0.11 — Google Maps Platform integration, 3-Pillar Civic Portal Architecture, Municipal Action Center with Cloud SQL Checkpoint Timelines (+3h, +6h, +12h, +24h), and Upwind/Downwind Industrial Source Factor Analysis; decisions locked 18 October 2026.
+**Revision:** 0.14 — National Multi-State Expansion, Pure Google Telemetry with Weekly/Monthly Point Line Graphs, Govt Actions State & Area Multi-Filter, and Municipal Action Center Compact View with Configurable 15s–3d Checkpoint Intervals; decisions locked 18 October 2026.
 
 
-**Revision history:** 0.6-draft locked the execution decisions now expressed as the scope tiers and phases below; 0.7-draft removes person-based planning, adds the task execution order and change management, and folds in the route-entity change set: versioned routes co-planned with the 12 action zones, the Palam–Dwarka flagship proposal (confirmed at Gate 1 from the anchor-overlap table), the AirDelhi manifest row, the 11-district fix and the anchor-state wording guard; `schema_version` moves to `0.7-draft` with it, additively. 0.8-draft adds the geometry-transport decision (§4.8), the CSV/Cloud Storage artifact delivery path (§5), the read-only MCP tool layer over gold views (§12) and task rows 2.6/4.5; `schema_version` moves to `0.8` (additive: `GeometryTransport`/`GeoJSONGeometry` defs, embedded `geometry` on `ZoneVersion`/`RouteVersion`, `geometry_ref` demoted to a nullable server-side provenance pointer); from this revision forward, version strings drop the `-draft` suffix (prior revisions 0.6-draft/0.7-draft/0.8-draft kept their historical names). 0.9 closes six UI-driven gaps: a `ContextDescriptor` shape for weather/satellite `Measurement` rows (§4.9), structured `ConfounderFinding` records replacing confounder strings (§6), the fixed 12-case scenario catalog (§5), `Role`/`Capability`/`SessionInfo` and `GET /v1/me` (§11), server-owned `Legend` bands with `legend_id` on aggregates (§8) and `ZoneSummary` with computed anchor state; it also defines the canonical geometry hash and the `LocationContext`, `ScenarioRun` list and legend endpoints. `schema_version` moves to `0.9`. 0.10 incorporates the Government Clean Air Actions & Directives Registry into the public/officer outcomes experience with pre/post AQI comparisons, live Delhi policy widgets (Odd-Even plate status, Green War Room AI Command Center, GRAP-IV), stable notices for unmeasured data gaps and weather-confounded events, and specializes the GenAI layer into 3 dedicated, cached Gemini 2.5 Flash-Lite narrative agents (`aerify-hotspot-agent`, `aerify-simulation-agent`, `aerify-audit-agent`). 0.11 integrates Google Maps Platform (`@vis.gl/react-google-maps`) with live CPCB 11-district GeoJSON layers and satellite/terrain toggles; streamlines the portal into 3 core pillars (Air Quality Dashboard, Govt Actions & Impact, Municipal Action Center); establishes live Cloud SQL persistence for municipal interventions with baseline atmospheric capture and scheduled evaluation checkpoints (+3h, +6h, +12h, +24h); equips the Gemini 2.5 context narrative with upwind/downwind industrial plume factor analysis; and upgrades authentication to standard Firebase Google Sign-In.
+**Revision history:** 0.6-draft locked execution decisions; 0.7-draft added task execution order and route-entity change set; 0.8 added geometry-transport and read-only MCP tool layer; 0.9 closed six UI gaps; 0.10 incorporated Government Clean Air Actions Registry with pre/post comparisons; 0.11 integrated Google Maps Platform, Near You permission query, 3-pillar civic portal, and Cloud SQL action persistence. 0.12 transformed the platform to a Google-Native Environmental Architecture (Google Air Quality API 30-day history & 500m grid, Pollen API, Weather API, CPCB 13 Winter Action Plan hotspots, retiring cameras and synthetic bus generators). 0.13 added production authentication, top header Google account profile chip, and citizen "Actions in Visited Places" with 30-day filter. **0.14 delivers National Multi-State Expansion** (auto-detected state + state selector dropdown + reset button), transforms District Detail View to pure Google Telemetry (rolling 4h/24h from Google AQI API `history:lookup`, graceful notice for districts without continuous physical CPCB stations, weekly/monthly point-based SVG line graph), redesigns the Govt Actions page (purges Detailed Sensor Audit, decouples directives from sensors, adds multi-select area filter with clearable tags), and redesigns the Municipal Action Center (chronological sorting, pending vs. measuring split, compact list view with right-side details drawer, and configurable 4-checkpoint measurement intervals from 15 seconds to 3 days).
 
 
 ## 1. Mission and scope
 
 
-Aerify AI combines mobile particulate observations, public monitoring stations, weather models, satellite context and nearby-source geography to help officers identify Delhi pollution hotspots, compare interventions and communicate results to the public.
+Aerify AI combines real-time and 30-day historical Google Air Quality API telemetry, Google Pollen API, Copernicus Sentinel-5P satellite assimilation, official CPCB monitoring stations, and industrial geography into an actionable municipal intelligence platform to help officers track Delhi pollution hotspots, deploy interventions, and scientifically verify clean air impacts.
 
 
-The demo uses a **hybrid evidence model**:
+The production architecture uses a **Google-Native Evidence Model**:
 
 
-- Historical IIT Delhi bus observations provide real PM1, PM2.5, PM10, GPS and time where the archive has coverage.
-- CPCB/DPCC stations provide official regional pollutant and AQI context where data access and reuse are verified.
-- Weather APIs provide temperature, relative humidity, precipitation, wind speed and wind direction at the provider's model-grid resolution.
-- Satellite products provide regional atmospheric context such as NO2, SO2 and aerosol indicators. A separate industrial-site or land-use registry identifies nearby factories; satellite pixels alone do not identify a factory or prove it caused a road reading.
-- Team-recorded video or images illustrate the street scene at their true capture time. Cameras do not measure AQI and no Vision AI is used to verify an intervention.
-- Missing local history and the post-action demo period are generated by a deterministic scenario engine. Every generated value is visibly marked **Synthetic demonstration**.
-- As live bus, fixed, portable or public feeds become available, new records are stored as observed data. Synthetic records are never relabelled as observed later.
+- **Google Air Quality API (`currentConditions:lookup` & `history:lookup`)** provides continuous 500m area coverage and up to 30 days of hourly ground-level telemetry for core pollutants: $\text{PM}_{2.5}$, $\text{PM}_{10}$, $\text{NO}_2$, $\text{O}_3$, $\text{CO}$, $\text{SO}_2$, and official CPCB AQI.
+- **Satellite Assimilation:** Google Air Quality API's underlying models directly assimilate **ESA Copernicus Sentinel-5P (TROPOMI spectrometer)** tropospheric trace gas columns and CAMS atmospheric dispersion into its 500m surface grid.
+- **Google Pollen API (`forecast:lookup`)** provides multi-day Tree, Grass, and Weed pollen risk indices to augment particulate data with comprehensive public health and allergy advisories.
+- **Difference-in-Differences (DiD) Evaluation:** Municipal interventions (e.g. water suppression at Anand Vihar ISBT, mechanical sweeping at Palam–Dwarka, anti-smog guns at Wazirpur) are evaluated by pulling real hourly Google AQI telemetry before the action, at completion, and across scheduled checkpoints (`+3h`, `+6h`, `+12h`, `+24h`), comparing the treated 500m hotspot against an untreated control hotspot (2–3 km away) to mathematically isolate net municipal impact.
+- **Retirement of Fleet Cameras:** Illustrative camera-event pipelines and video processing have been officially retired from the active architecture to focus 100% on environmental telemetry and action verification.
+- **Retirement of Synthetic Data Generators:** Replaced by real 30-day historical hourly curves from Google Air Quality API, eliminating mock simulation disclaimers and delivering authentic data across all 11 Delhi districts.
+- **Cloud SQL PostgreSQL/PostGIS** serves as the authoritative operational database for municipal action plans, checkpoint states, and geographic district boundaries.
+- **Google Cloud Vertex AI (Gemini 2.5 Flash-Lite)** synthesizes multi-pollutant concentrations, meteorological confounders (wind/temperature), and upwind/downwind industrial corridors into executive municipal briefings.
 
 
 The flagship intervention is **water suppression on the Palam–Dwarka corridor**, with Anand Vihar ISBT retained as one of the other scenario actions. The flagship choice is confirmed at Gate 1 against the per-zone anchor-overlap table: a flagship zone with no verified observed anchors would make the demo's centrepiece fully synthetic. The untreated comparison area is selected after geographic and pre-trend review. The product evaluates PM2.5 and PM10 separately. It can show additional variables, but they do not become intervention evidence unless a valid source actually measured them.
@@ -85,15 +86,44 @@ If only current context exists, label the result **Synthetic scenario conditione
 
 ```mermaid
 flowchart TB
- SRC["Bus + stations + weather + satellite + source registry"] --> ING["Source adapters and provenance validation"]
- ING --> RAW["Immutable raw observations and context"]
- RAW --> FUS["Spatial and temporal fusion"]
- FUS --> GEN["Versioned synthetic scenario generator"]
- FUS --> ANA["Hotspot, aggregation and intervention analysis"]
- GEN --> ANA
- ANA --> API["FastAPI public and officer API"]
- API --> UI["React maps, drill-down and action workflow"]
- ANA --> AI["Gemini explanation from read-only evidence"]
+  subgraph INGESTION["Google Cloud & Environmental API Ecosystem"]
+    GAQ["Google Air Quality API (500m Grid & 30-Day History)"]
+    GPL["Google Pollen API (Tree, Grass, Weed Forecasts)"]
+    GWE["Google Weather API (Wind, Temp, Humidity)"]
+    GGEO["Google Geocoding API (State & District Resolution)"]
+    CPCB["Physical CPCB/DPCC CAAQMS Stations"]
+    SAT["ESA Sentinel-5P & CAMS Dispersion (Assimilated)"]
+  end
+
+  subgraph STORAGE["Operational & Relational Store (Cloud SQL PostGIS)"]
+    ACTIONS["actions (Interventions & Checkpoint Timelines)"]
+    OBS["context_observations (Empirical Checkpoint Readings)"]
+    USERS["app_users (RBAC: CITIZEN, OFFICER, SUPERVISOR)"]
+    DIRECTIVES["policy_directives (Authoritative Statutory Orders)"]
+  end
+
+  subgraph EVALUATION["Difference-in-Differences (DiD) Engine"]
+    DID["DiD Impact Worker (Treated vs Control Evaluation)"]
+    SCHED["Configurable Checkpoint Scheduler (15s – 3d)"]
+  end
+
+  subgraph AI_LAYER["Vertex AI Intelligence"]
+    GEMINI["Gemini 2.5 Flash-Lite (Executive Briefings & Gazette Verification)"]
+  end
+
+  subgraph CLIENT["Unified React Frontend (Vite + Tailwind)"]
+    DASH["Air Quality Dashboard (Google Maps JS + State Selector + SVG Line Graph)"]
+    VISITED["Actions in Visited Places (30-Day Citizen Ledger)"]
+    REGISTRY["Govt Actions & Impact (State & Area Multi-Filter Dropdown)"]
+    OFFICER["Municipal Action Center (Compact List & Right-Side Details Drawer)"]
+  end
+
+  INGESTION --> STORAGE
+  STORAGE --> EVALUATION
+  EVALUATION --> STORAGE
+  STORAGE --> CLIENT
+  STORAGE --> AI_LAYER
+  AI_LAYER --> CLIENT
 ```
 
 
@@ -102,16 +132,20 @@ flowchart TB
 
 | Responsibility | Component |
 | --- | --- |
-| Raw source acquisition, licenses, units and spatial metadata | Source adapters + source manifest |
-| Observed/context/synthetic separation | Backend provenance service and database constraints |
-| Historical reconstruction and future scenario generation | Deterministic Python generator |
-| District/cell/road summaries and freshness | Deterministic aggregation service |
-| Intervention simulations and observed evaluation | Deterministic analysis worker |
-| Narrative and source hypotheses | Gemini/ADK using validated read-only tools |
-| Public/officer experience | React frontend using one generated API contract |
+| 500m Real-Time & 30-Day Historical Ground Telemetry | Google Air Quality API (`currentConditions:lookup` & `history:lookup`) |
+| Allergen Forecasts (Tree, Grass, Weed) | Google Pollen API (`forecast:lookup`) |
+| Ambient Meteorological Confounders (Wind, Temp, Humidity) | Google Weather API + Open-Meteo Fallback |
+| Dynamic National State & District Resolution | Google Geocoding API + Browser HTML5 Geolocation |
+| Base Maps, Satellite/Terrain Layers, District GeoJSON | Google Maps JavaScript SDK (`@vis.gl/react-google-maps`) |
+| Operational Persistence & Spatial Integrity | Google Cloud SQL for PostgreSQL (PostGIS) via IAM Connector |
+| Dual-Path Authentication & RBAC | Firebase Google Auth (Citizens) + `@mcd.delhi.gov.in` Email/Password (Officers) |
+| Causal Impact Evaluation across 4 Custom Intervals | Empirical Difference-in-Differences (DiD) Worker (15s to 3d Checkpoints) |
+| Authoritative Statutory Policy Orders | Cloud SQL `policy_directives` (Two-Tier Administrative & Gazette Verification) |
+| Narrative Briefings & Gazette Extraction | Google Cloud Vertex AI (Gemini 2.5 Flash-Lite with Billing Spend Caps) |
+| Responsive 3-Pillar Civic & Officer Interface | React (Vite, TypeScript, Tailwind CSS, Lucide Icons) |
 
 
-Gemini may explain or rank already computed evidence. It cannot fabricate measurements, produce the authoritative scenario series, change action state or assign a result status.
+Gemini may explain or rank already computed evidence and extract structured gazette directives. It cannot fabricate measurements, mutate intervention states, or alter mathematical DiD calculations.
 
 
 ### Scope tiers
@@ -241,78 +275,67 @@ Precedence within the repo: accepted decisions in `docs/data-and-schema-decision
 ## 4. Data ingestion and fusion
 
 
-### 4.1 Source adapters
+### 4.1 Source adapters (Google-Native Environmental Telemetry)
 
 
-1. **IIT Delhi bus archive:** ingest PM1, PM2.5, PM10, GPS and timestamps; preserve device IDs and CC BY attribution. It is historical playback, not a live feed.
-2. **Live mobile or portable sensors:** optional future adapter for PM readings, GPS and sensor diagnostics. Calibrate/evaluate devices before treating their values as reliable public measurements.
-3. **CPCB/DPCC:** ingest official station concentrations and AQI through an approved feed or documented import. A station remains a point/regional source.
-4. **Weather:** obtain temperature, relative humidity, precipitation, wind speed and direction for requested coordinates and times. Persist the returned grid cell, nominal resolution and model.
-5. **Satellite atmosphere:** ingest selected Sentinel-5P/CAMS layers with acquisition time, footprint/resolution, quality/cloud flags and pollutant product.
-6. **Nearby sources:** maintain industrial facilities, industrial land-use polygons, major roads and construction/source candidates from a licensed registry. Store registry provenance and last update.
-7. **Media:** record the original video/image capture time, GPS if available and a restricted media reference. Scenario time is separate.
+1. **Google Air Quality API (`airquality.googleapis.com`):** Ingests live 500m conditions (`currentConditions:lookup`) and up to 30 days of hourly historical telemetry (`history:lookup`). Serves primary ground-level criteria pollutants ($\text{PM}_{2.5}$, $\text{PM}_{10}$, $\text{NO}_2$, $\text{O}_3$, $\text{CO}$, $\text{SO}_2$) and official CPCB AQI.
+2. **Google Pollen API (`pollen.googleapis.com`):** Ingests 3-day daily pollen forecasts (`forecast:lookup`) for Tree, Grass, and Weed allergen indices, complete with cross-reactive plant species health recommendations.
+3. **Google Weather API (`weather.googleapis.com`):** Ingests ambient meteorological confounders (temperature, relative humidity, precipitation rate, wind speed, wind direction) at coordinate level with Open-Meteo fallback.
+4. **Google Geocoding API (`geocoding-backend.googleapis.com`):** Ingests reverse-geocoded spatial metadata, resolving GPS coordinates to locality, municipal ward, district, and state.
+5. **CPCB/DPCC Continuous Monitoring Stations (CAAQMS):** Ground-truth stationary point observations. For districts without physical continuous monitoring stations, the platform provides an explicit transparent notice while displaying 500m satellite-assimilated telemetry.
+6. **Copernicus Sentinel-5P & CAMS Satellite Assimilation:** Tropospheric trace gas column densities and aerosol optical depth, assimilated directly into Google's continuous 500m surface grid.
+7. **Statutory Policy Directives Feed (`policy_directives`):** Authoritative gazette orders (e.g., CAQM GRAP-IV, Odd-Even, Green War Room, BMC dust guidelines) seeded in Cloud SQL and verified via a two-tier pipeline: official administrative officer entry + automated PIB/CAQM gazette parsing with Gemini 2.5 Flash-Lite.
+8. **Permanent Retirement of Bus & Camera Simulators:** All legacy DTC bus sensor archives (`mobile_sensor_telemetry`), road matchers (OSRM), and video camera event models have been completely retired and pruned from the production ingestion pipeline.
 
 
-Reference datasets inform the design but are not automatically mixed into Delhi values. AirDelhi is the Delhi seed source. Tokyo one-minute provisional data and Japan's hourly AEROS archive support the separation of sensor metadata, raw observations and validated aggregates. Copenhagen/Oakland mobile campaigns support map matching and repeated-pass aggregation; their concentrations must not be used as Delhi training values without a separate transfer/validation decision.
-
-
-### 4.2 Collection, operational and display resolution
-
-
-Collection frequency, analysis windows and map resolution are separate controls:
-
-
-| Layer | Initial rule |
-| --- | --- |
-| Raw collection | Preserve the source frequency unchanged; ingestion must accept high-frequency mobile data (including about 3 seconds or 1 Hz). |
-| Operational series | One-minute mobile aggregates for the demo and UI playback. |
-| Comparison windows | Materialize 15-, 30- and 60-minute robust aggregates with counts, source counts and coverage. |
-| Road support | Configurable 100–500 m segments for the prototype; shorter segments are allowed only when repeat coverage supports them. |
-| City display | Combine eligible road aggregates into 2–3 km analysis cells, then districts. |
-| Reporting | Derive hourly/daily summaries without discarding the finer records. |
-
-
-A single passing reading is a direct observation at that place and time, but it is not sufficient evidence of a persistent hotspot. Stable road colouring requires repeated passes across configured time/day strata. Store unmatched points rather than silently snapping observations beyond the map-matching tolerance.
-
-
-### 4.3 Spatial hierarchy
+### 4.2 Spatial hierarchy: National Multi-State Architecture
 
 
 ```mermaid
 flowchart TD
- C["Delhi city"] --> D["Official districts (11 revenue districts in the verified boundaries snapshot)"]
- D --> G["2–3 km analysis cells"]
- G --> R["Measured road segments and observations"]
+  IN["National India Level"] --> ST["State Level (Delhi, Maharashtra, Uttar Pradesh, MP, etc.)"]
+  ST --> DT["Administrative Revenue Districts (e.g. 11 Delhi Revenue Districts)"]
+  DT --> HW["Municipal Wards & Recognized Hotspots (500m Resolution)"]
+  HW --> PT["Point-Level Empirical Interventions & Checkpoint Coordinates"]
 ```
 
 
-- Use official Delhi district polygons for the district view. The district count and membership come from the verified boundaries snapshot (Delhi has 11 revenue districts; older 9-district or 13/15-including-subdivision listings are not used). If the design groups districts into North/South/East/West style regions, call those product **zones**, not districts.
-- Use stable H3/hex or square analysis cells sized approximately 2–3 km for drill-down. Cell size is configurable and is not a claim that every road was measured.
-- Snap mobile observations to road segments for display and aggregate them within a limited time window.
-- Mark cells and roads with no recent eligible observation as **No recent data**. Never fill them with an unlabeled synthetic or 11–45 km model value.
+- **Dynamic Geolocation Resolution**: On initial load, browser GPS and Google Geocoding resolve the user's active state and district.
+- **State Selector Dropdown & Reset**: Located above the interactive vector map, allowing citizens and officers to freely inspect clean air operations across different states (e.g. inspecting Delhi from Mumbai), with a `[Reset to My Location]` button.
+- **Wards & Hotspots (Replacing Corridor Cells)**: Evaluates recognized municipal wards and pollution hotspots (e.g. Anand Vihar, Wazirpur, Dwarka, Palam, Jahangirpuri) with live 500m Google telemetry, completely replacing synthetic bus corridor cells.
+- **District Detail Pure Google Telemetry**:
+  - Rolling 4-hour and 24-hour averages derived directly from Google AQI API `history:lookup`.
+  - Continuous physical station reporting where CAAQMS stations exist, or graceful no-station notices for rural/unmonitored districts.
+  - Interactive **Weekly (7 Days) / Monthly (30 Days) Point-Based SVG Line Graph** showing daily average trends with circular nodes and hover tooltips.
 
 
-### 4.4 Routes as versioned entities — locked
+### 4.3 Policy Directives Data Provenance & Statutory Two-Tier Verification
 
 
-Routes are first-class, versioned entities with the same immutability pattern as zones:
+Directives (e.g., GRAP-IV, Odd-Even Scheme, Firecracker Bans, BMC Dust Mitigation Mandates) are legally binding administrative orders, NOT speculative news headlines:
+1. **Authoritative Cloud SQL Store (`policy_directives`)**: Directives are stored with official Gazette Order Number, Issuing Department, Effective Date/Time Window, Geographic State Scope, and Legal Penalties (e.g. ₹20,000 fine under the Motor Vehicles Act).
+2. **Two-Tier Validation Pipeline**:
+   - **Tier 1 (Authenticated Administrative Entry)**: Verified municipal officers (`@mcd.delhi.gov.in`, `@mcgm.gov.in`) log gazette orders directly via the authenticated officer portal.
+   - **Tier 2 (Automated Official Gazette & PIB Ingestion via Gemini 2.5)**: Official government circulars from the Press Information Bureau (PIB), CAQM, and State Pollution Control Boards (SPCBs) are analyzed by Vertex AI Gemini 2.5 Flash-Lite to extract and verify statutory order numbers and effective windows before publishing to the live registry with links to the official gazette PDF.
+   - **Unvetted News Prohibition**: Raw commercial news scrapers and social media feeds are strictly barred from publishing policy directives to prevent public rumor panics.
 
 
-- `routes` gives stable identity; `route_versions` stores immutable geometry, purpose (`OBSERVED_TRACE` for real IIT Delhi archive traces, `SYNTHETIC_CORRIDOR` for generator-built corridors), source dataset, road network/segmentation versions and mapped device IDs, with a geometry hash. Playback and generator runs reference route version IDs, never mutable geometry.
-- Real trace groups: historical IIT Delhi passes sharing a corridor are grouped into one observed route version each, preserving original device IDs and times. Route playback renders these groups.
-- Synthetic corridors: the generator creates route versions for its virtual buses, declared as `SYNTHETIC_CORRIDOR`, and writes `route_version_ids` into every scenario run's lineage.
-- A device maps to at most one active route version at a time; a route version's device list is part of its immutable content.
-- Changing a route's geometry or device mapping creates a new version with a new ID; nothing is edited in place.
+### 4.4 Municipal Action Center & Configurable Checkpoints Engine
 
 
-### 4.5 Road network and map matching — locked
+- **Chronological Sorting & Categorized Split**:
+  - **Section A: Active Operations Pending Execution (`PENDING_COMPLETION`)**: Dispatched field actions awaiting completion, displaying prominent `[Mark as Done]` action buttons.
+  - **Section B: Post-Action Evaluation Active (`MEASURING_IMPACT`)**: Actions marked done whose scheduled measurement intervals are actively querying Google Environmental APIs.
+- **Compact Line-Item View**: Streamlined rows showing Hotspot Name, Action Type, Stage Badge, and Date/Time, opening the full checkpoint timeline in a **Right-Side Details Drawer**.
+- **Configurable 4-Checkpoint Measurement Intervals**: Officers configure 4 measurement intervals with flexible units (`Seconds`, `Minutes`, `Hours`, `Days`) bounded between **15 seconds** (for instant hackathon verification) and **3 days** (72 hours). When checkpoints mature, the system polls Google Air Quality and Weather APIs to calculate empirical Difference-in-Differences (DiD) impact.
 
 
-- Source the demo road network from a dated OpenStreetMap Northern Zone/India PBF distributed by Geofabrik, clipped to the accepted Delhi boundary. Record URL, extraction timestamp, SHA-256, ODbL version and required OpenStreetMap attribution.
-- Run a self-hosted, version-pinned OSRM Match service for timestamped mobile traces; do not depend on the public demo server. Pass recorded GPS accuracy where available. Reject observations with no match, match confidence below `0.50`, or snapped distance above `40 m`; keep them as unmatched raw points.
-- Build directed road segments by splitting matched OSM ways at intersections and at a fixed maximum length of `250 m` for `segmentation_version=delhi_osm_250m_v1`. The displayed 100–500 m range is not retuned inside this version.
-- A segment ID is a deterministic hash of `segmentation_version`, OSM way ID, direction and fractional start/end offsets. A new source snapshot or segmentation rule creates a new version and new IDs plus an explicit crosswalk; historical evaluations continue referencing their original version.
-- Store `road_source_version`, `matching_method_version`, confidence, snapped distance and original coordinates with every match.
+### 4.5 Hotspot Zones & Google Maps Platform Vector Layers — locked
+
+
+- **Hotspot Zones Architecture**: Interventions and evaluations are anchored to 500m Hotspot Zones and Municipal Wards (e.g. Anand Vihar, Wazirpur, Dwarka, Palam, Jahangirpuri, Bawana, Mundka) aligned directly with CPCB Winter Action Plan hotspot coordinates.
+- **Google Maps Vector Layers**: Powered by `@vis.gl/react-google-maps` using the Google Maps JavaScript SDK, rendering dynamic vector base tiles, satellite/hybrid/terrain switches, and official administrative district GeoJSON polygons.
+- **Retirement of Bus Corridors & OSRM Matchers**: All legacy bus corridors, synthetic bus fleet routes, and self-hosted OSRM map-matching services have been completely retired. Alembic migrations formally deprecate and drop the `mobile_sensor_telemetry` table. Operational baselines and causal evaluations derive cleanly from Google Environmental APIs persisted in `actions` and `context_observations`.
 
 
 ### 4.6 Nearby factory/source context

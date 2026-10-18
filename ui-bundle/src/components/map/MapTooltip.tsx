@@ -71,13 +71,13 @@ export const MapTooltip: React.FC<MapTooltipProps> = ({
       onMouseLeave={onMouseLeave}
       className={`absolute z-30 w-84 bg-white/98 backdrop-blur-md rounded-2xl border-2 shadow-2xl p-4 text-slate-800 pointer-events-auto transition-all ${
         isPinned ? 'border-sky-500 ring-4 ring-sky-500/10' : 'border-slate-300'
-      } before:absolute before:-inset-4 before:content-[''] before:-z-10`}
+      }`}
     >
       {/* Header */}
       <div className="flex items-start justify-between gap-2 border-b border-slate-100 pb-2.5 mb-2.5">
         <div>
           <div className="text-[10px] font-bold uppercase tracking-wider text-slate-500">
-            Delhi NCT Revenue District
+            Monitored Revenue District
           </div>
           <h4 className="text-base font-extrabold text-slate-950 tracking-tight leading-snug">
             {featureName}
@@ -131,9 +131,9 @@ export const MapTooltip: React.FC<MapTooltipProps> = ({
             <strong className="text-slate-950 font-mono font-bold">{primaryPol}</strong>
           </div>
           <div>
-            <span className="text-slate-500 font-medium">4h Samples: </span>
+            <span className="text-slate-500 font-medium">Model: </span>
             <strong className="text-slate-950 font-mono font-bold">
-              {aggregate.coverage.sample_count}
+              {aggregate.coverage?.sample_count ? `${aggregate.coverage.sample_count} samples` : '500m Grid'}
             </strong>
           </div>
         </div>

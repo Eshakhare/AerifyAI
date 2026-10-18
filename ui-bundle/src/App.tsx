@@ -13,12 +13,18 @@ import { defaultApiClient, ApiClient } from './api';
 import {
   ClockMetadata,
   SessionInfo,
-  Role
+  Role,
+  AuthUser
 } from './contracts/types';
 import { Sidebar, NavTab } from './components/shell/Sidebar';
 import { Header } from './components/shell/Header';
-import { OfficerAuthModal } from './components/shell/OfficerAuthModal';
-import { signOutFirebaseClient } from './auth/firebase';
+import { AuthModal } from './components/shell/AuthModal';
+import {
+  signOutFirebaseClient,
+  signInWithFirebaseGoogle,
+  isFirebaseClientConfigured,
+  onFirebaseAuthStateChanged
+} from './auth/firebase';
 
 import { MapView } from './views/MapView';
 import { ScenariosView } from './views/ScenariosView';
@@ -32,6 +38,16 @@ export default function App() {
   const [session, setSession] = useState<SessionInfo | null>(null);
   const [currentTab, setCurrentTab] = useState<NavTab>('dashboard');
   const [activeDistrictId, setActiveDistrictId] = useState<string | null>(null);
+
+  // Authenticated user state
+  const [authUser, setAuthUser] = useState<AuthUser | null>(() => {
+    try {
+      const saved = localStorage.getItem('aerify_auth_user') || localStorage.getItem('aerify_google_user');
+      return saved ? JSON.parse(saved) : null;
+    } catch {
+      return null;
+    }
+  });
 
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -54,6 +70,18 @@ export default function App() {
     async function initApp() {
       try {
         setLoading(true);
+
+        // If a previously saved session exists, configure client before fetching /me
+        if (authUser && authUser.role && authUser.role !== 'PUBLIC') {
+          if (apiClient.setFixtureRole) {
+            apiClient.setFixtureRole(authUser.role);
+          }
+        } else {
+          if (apiClient.setFixtureRole) {
+            apiClient.setFixtureRole('PUBLIC');
+          }
+        }
+
         const [meData, clockData] = await Promise.all([
           apiClient.getMe(),
           apiClient.getClock()
@@ -68,7 +96,125 @@ export default function App() {
       }
     }
     initApp();
+
+    // Listen to Firebase auth state changes in the background
+    const unsubscribe = onFirebaseAuthStateChanged(async (fbUser) => {
+      if (fbUser) {
+        const token = await fbUser.getIdToken().catch(() => undefined);
+        let role: Role = 'PUBLIC';
+        const normEmail = (fbUser.email || '').toLowerCase();
+        if (normEmail.includes('dpcc') || normEmail.includes('supervisor')) {
+          role = 'SUPERVISOR';
+        } else if (normEmail.includes('mcd') || normEmail.includes('officer')) {
+          role = 'OFFICER';
+        }
+
+        const resolvedUser: AuthUser = {
+          uid: fbUser.uid,
+          email: fbUser.email,
+          displayName:
+            fbUser.displayName ||
+            (role === 'PUBLIC'
+              ? 'Delhi Citizen'
+              : role === 'SUPERVISOR'
+              ? 'Dr. Sunita Rao'
+              : 'Esha Khare'),
+          photoURL: fbUser.photoURL,
+          role,
+          provider: fbUser.providerData?.[0]?.providerId === 'google.com' ? 'google' : 'password'
+        };
+
+        setAuthUser(resolvedUser);
+        localStorage.setItem('aerify_auth_user', JSON.stringify(resolvedUser));
+        localStorage.setItem('aerify_google_user', JSON.stringify(resolvedUser));
+
+        if (apiClient.loginWithCloudSql) {
+          apiClient
+            .loginWithCloudSql({
+              email: fbUser.email || undefined,
+              firebase_uid: fbUser.uid,
+              display_name: fbUser.displayName || undefined,
+              id_token: token,
+              requested_role: role
+            })
+            .then((newSession) => {
+              if (newSession) setSession(newSession);
+            })
+            .catch(() => {});
+        } else if (apiClient.setFixtureRole) {
+          apiClient.setFixtureRole(role);
+          refreshSession();
+        }
+      }
+    });
+
+    return () => unsubscribe();
   }, [apiClient]);
+
+  const handleLoginSuccess = async (user: AuthUser, updatedSession?: SessionInfo) => {
+    setAuthUser(user);
+    if (updatedSession) {
+      setSession(updatedSession);
+    } else {
+      await refreshSession();
+    }
+  };
+
+  const handleGoogleSignInDirect = async () => {
+    if (isFirebaseClientConfigured()) {
+      try {
+        const fbRes = await signInWithFirebaseGoogle();
+        let finalRole: Role = 'PUBLIC';
+        const normEmail = (fbRes.email || '').toLowerCase();
+        if (normEmail.includes('dpcc') || normEmail.includes('supervisor')) {
+          finalRole = 'SUPERVISOR';
+        } else if (normEmail.includes('mcd') || normEmail.includes('officer')) {
+          finalRole = 'OFFICER';
+        }
+
+        let updatedSession: SessionInfo | undefined;
+        if (apiClient.loginWithCloudSql) {
+          try {
+            updatedSession = await apiClient.loginWithCloudSql({
+              email: fbRes.email || undefined,
+              firebase_uid: fbRes.uid,
+              display_name: fbRes.displayName || undefined,
+              id_token: fbRes.idToken,
+              requested_role: finalRole
+            });
+            if (updatedSession) setSession(updatedSession);
+          } catch (e) {
+            console.warn('Backend login error:', e);
+          }
+        } else if (apiClient.setFixtureRole) {
+          apiClient.setFixtureRole(finalRole);
+          await refreshSession();
+        }
+
+        const user: AuthUser = {
+          uid: fbRes.uid,
+          email: fbRes.email,
+          displayName: fbRes.displayName || 'Delhi Citizen',
+          photoURL: fbRes.photoURL,
+          role: finalRole,
+          provider: 'google'
+        };
+        setAuthUser(user);
+        localStorage.setItem('aerify_auth_user', JSON.stringify(user));
+        localStorage.setItem('aerify_google_user', JSON.stringify(user));
+      } catch (err: any) {
+        if (
+          err?.code !== 'auth/popup-closed-by-user' &&
+          err?.code !== 'auth/cancelled-popup-request'
+        ) {
+          console.error('Direct Google Sign In error:', err);
+          setIsAuthModalOpen(true);
+        }
+      }
+    } else {
+      setIsAuthModalOpen(true);
+    }
+  };
 
   const handleRoleChange = async (newRole: Role, updatedSession?: SessionInfo) => {
     if (updatedSession) {
@@ -103,10 +249,13 @@ export default function App() {
 
   const handleSignOut = async () => {
     await signOutFirebaseClient();
+    setAuthUser(null);
+    localStorage.removeItem('aerify_auth_user');
+    localStorage.removeItem('aerify_google_user');
     if (apiClient.setFixtureRole) {
       apiClient.setFixtureRole('PUBLIC');
-      await refreshSession();
     }
+    await refreshSession();
     if (currentTab === 'officer-portal' || currentTab === 'simulations') {
       setCurrentTab('dashboard');
     }
@@ -137,12 +286,15 @@ export default function App() {
           currentTab={currentTab}
           activeDistrictName={activeDistrictId ? activeDistrictId.replace('dist_', '').replace(/_/g, ' ') : null}
           session={session}
+          authUser={authUser}
+          googleUser={authUser}
           onOpenAuthModal={() => setIsAuthModalOpen(true)}
           onRoleChange={handleRoleChange}
           onToggleMobileMenu={() => setIsMobileMenuOpen(true)}
           isDevModeEnabled={isDevModeEnabled}
           onToggleDevMode={() => setIsDevModeEnabled(!isDevModeEnabled)}
           onSignOut={handleSignOut}
+          onGoogleSignIn={handleGoogleSignInDirect}
         />
 
         {/* Scrollable Main Content Area */}
@@ -171,6 +323,8 @@ export default function App() {
                   apiClient={apiClient}
                   clock={clock}
                   session={session}
+                  googleUser={authUser}
+                  onGoogleSignIn={handleGoogleSignInDirect}
                   activeDistrictId={activeDistrictId}
                   onSelectDistrict={setActiveDistrictId}
                 />
@@ -195,7 +349,7 @@ export default function App() {
                     <div className="pt-2">
                       <button
                         onClick={() => setIsAuthModalOpen(true)}
-                        className="px-4 py-2.5 rounded-xl bg-slate-900 hover:bg-slate-800 text-white text-xs font-bold shadow-xs transition-colors"
+                        className="px-4 py-2.5 rounded-xl bg-slate-900 hover:bg-slate-800 text-white text-xs font-bold shadow-xs transition-colors cursor-pointer"
                       >
                         Sign In as Municipal Officer
                       </button>
@@ -214,6 +368,7 @@ export default function App() {
                   clock={clock}
                   session={session}
                   onRefreshSession={refreshSession}
+                  onOpenAuthModal={() => setIsAuthModalOpen(true)}
                 />
               )}
 
@@ -237,11 +392,11 @@ export default function App() {
         </footer>
       </div>
 
-      {/* Municipal Officer Authentication Modal */}
-      <OfficerAuthModal
+      {/* Unified Authentication Modal */}
+      <AuthModal
         isOpen={isAuthModalOpen}
         onClose={() => setIsAuthModalOpen(false)}
-        onSelectRole={handleRoleChange}
+        onLoginSuccess={handleLoginSuccess}
         apiClient={apiClient}
       />
     </div>

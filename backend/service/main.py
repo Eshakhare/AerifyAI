@@ -44,6 +44,11 @@ from service.models import (
     Zone,
     ZoneVersionRecord,
 )
+from service.google_environmental_client import (
+    DELHI_13_HOTSPOTS,
+    fetch_live_google_air_quality,
+    fetch_live_google_weather,
+)
 from service.open_meteo_client import (
     compute_indian_aqi,
     fetch_live_atmospheric_snapshot,
@@ -237,7 +242,8 @@ def _verify_firebase_token(token: str) -> dict[str, Any] | None:
         from firebase_admin import auth as fb_auth
 
         if not firebase_admin._apps:
-            firebase_admin.initialize_app(options={"projectId": get_settings().project_id})
+            fb_pid = os.environ.get("FIREBASE_PROJECT_ID") or get_settings().project_id
+            firebase_admin.initialize_app(options={"projectId": fb_pid})
         return fb_auth.verify_id_token(token)
     except Exception:
         return None
@@ -248,11 +254,12 @@ def _lookup_or_provision_cloudsql_user(
     uid: str | None = None,
     email: str | None = None,
     display_name: str | None = None,
-    default_role: str = "OFFICER",
+    default_role: str = "PUBLIC",
 ) -> AppUser | None:
     """
     Resolves an AppUser row from Cloud SQL `app_users` by `firebase_uid` or `email`.
-    If a Firebase-authenticated user does not yet have a row, provisions one in Cloud SQL.
+    If an official exists in `app_users`, their role is preserved.
+    If a general user does not exist in `app_users`, provisions them as a normal citizen (PUBLIC).
     """
     norm_email = email.strip().lower() if email else None
     user_row: AppUser | None = None
@@ -279,9 +286,11 @@ def _lookup_or_provision_cloudsql_user(
 
     if uid or norm_email:
         resolved_uid = uid or f"uid_{norm_email}"
-        inferred_role = default_role if default_role in ROLE_CAPABILITIES else "OFFICER"
+        inferred_role = default_role if default_role in ROLE_CAPABILITIES else "PUBLIC"
         if norm_email and ("dpcc" in norm_email or "supervisor" in norm_email):
             inferred_role = "SUPERVISOR"
+        elif norm_email and ("mcd" in norm_email or "officer" in norm_email):
+            inferred_role = "OFFICER"
         short_id = (norm_email.split("@")[0] if norm_email else resolved_uid[:12]).replace(".", "_")
         user_row = AppUser(
             firebase_uid=resolved_uid,
@@ -413,7 +422,7 @@ def login_and_resolve_cloudsql_role(
         uid=uid,
         email=email,
         display_name=name,
-        default_role=req.requested_role or "OFFICER",
+        default_role=req.requested_role or "PUBLIC",
     )
 
     if not user_row:
@@ -1631,17 +1640,29 @@ def complete_intervention_action(
     int_rec.marked_done_at = now_iso
     int_rec.lifecycle = "action_completed"
 
-    # Mandate 5: Capture live atmospheric baseline on Mark as Done
+    # Mandate 5: Capture live atmospheric baseline on Mark as Done anchored to Delhi hotspot coordinates
+    target_lat, target_lng = 28.6469, 77.3160  # Anand Vihar default
+    zone_str = f"{int_rec.zone_id} {int_rec.id}".lower()
+    for hs_key, hs_info in DELHI_13_HOTSPOTS.items():
+        if hs_key in zone_str:
+            target_lat, target_lng = hs_info["lat"], hs_info["lng"]
+            break
+
     try:
-        atm_snapshot = fetch_live_atmospheric_snapshot(28.6139, 77.2090)
+        live_aq = fetch_live_google_air_quality(target_lat, target_lng)
+        live_wx = fetch_live_google_weather(target_lat, target_lng)
         baseline_weather = {
-            "temperature_c": atm_snapshot.get("temperature_c", 27.5),
-            "humidity_pct": atm_snapshot.get("humidity_pct", 58.0),
-            "wind_speed_kmh": atm_snapshot.get("wind_speed_kmh", 8.5),
-            "wind_speed_ms": round(atm_snapshot.get("wind_speed_kmh", 8.5) / 3.6, 2),
-            "wind_direction_deg": atm_snapshot.get("wind_direction_deg", 295.0),
-            "aqi": atm_snapshot.get("indian_aqi", 242),
+            "temperature_c": live_wx.get("temperature_c", 27.5),
+            "humidity_pct": live_wx.get("humidity_pct", 58.0),
+            "wind_speed_kmh": live_wx.get("wind_speed_kmh", 8.5),
+            "wind_speed_ms": live_wx.get("wind_speed_ms", 2.36),
+            "wind_direction_deg": live_wx.get("wind_direction_deg", 295.0),
+            "wind_compass": live_wx.get("wind_compass", "WNW"),
+            "aqi": live_aq.get("aqi", 242),
+            "pm25": live_aq.get("pollutants", {}).get("pm25", 92.0),
+            "pm10": live_aq.get("pollutants", {}).get("pm10", 184.0),
             "captured_at": now_iso,
+            "hotspot_coordinates": {"lat": target_lat, "lng": target_lng},
         }
     except Exception:
         baseline_weather = {
@@ -1650,6 +1671,7 @@ def complete_intervention_action(
             "wind_speed_kmh": 8.5,
             "wind_speed_ms": 2.36,
             "wind_direction_deg": 295.0,
+            "wind_compass": "WNW",
             "aqi": 242,
             "captured_at": now_iso,
         }

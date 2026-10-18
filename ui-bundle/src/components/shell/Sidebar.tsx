@@ -76,13 +76,6 @@ export const Sidebar: React.FC<SidebarProps> = ({
       description: 'Field Operations & Dispatch',
       icon: Shield,
       visible: isOfficerOrSupervisor
-    },
-    {
-      id: 'dev-showcase' as NavTab,
-      label: 'Dev Component Showcase',
-      description: 'UI Primitives & Badges',
-      icon: Code2,
-      visible: isDevModeEnabled
     }
   ];
 

@@ -31,6 +31,8 @@ interface GoogleMapViewProps {
   activeLegend: Legend | null;
   clock: ClockMetadata | null;
   selectedDistrictId: string | null;
+  center?: { lat: number; lng: number };
+  zoom?: number;
   onSelectDistrict: (districtId: string) => void;
   onOpenContextDrawer?: (districtId: string, districtName?: string) => void;
 }
@@ -109,8 +111,21 @@ const DistrictDataLayer: React.FC<DistrictLayerProps> = ({
         let y = 30;
         if (event.domEvent && containerRef.current) {
           const rect = containerRef.current.getBoundingClientRect();
-          x = Math.max(10, Math.min(rect.width - 290, event.domEvent.clientX - rect.left + 15));
-          y = Math.max(10, Math.min(rect.height - 240, event.domEvent.clientY - rect.top - 20));
+          const cardWidth = 340;
+          const cardHeight = 310;
+
+          // Place card to the right of cursor; if out of bounds, place to the left
+          let targetX = event.domEvent.clientX - rect.left + 20;
+          if (targetX + cardWidth > rect.width - 15) {
+            targetX = event.domEvent.clientX - rect.left - cardWidth - 20;
+          }
+          x = Math.max(15, Math.min(rect.width - cardWidth, targetX));
+
+          let targetY = event.domEvent.clientY - rect.top - 30;
+          if (targetY + cardHeight > rect.height - 15) {
+            targetY = rect.height - cardHeight - 15;
+          }
+          y = Math.max(15, targetY);
         }
         onHoverFeature(
           {
@@ -147,12 +162,25 @@ const DistrictDataLayer: React.FC<DistrictLayerProps> = ({
   return null;
 };
 
+const MapCameraHandler: React.FC<{ center?: { lat: number; lng: number }; zoom?: number }> = ({ center, zoom }) => {
+  const map = useMap();
+  useEffect(() => {
+    if (map && center) {
+      map.panTo(center);
+      if (zoom) map.setZoom(zoom);
+    }
+  }, [map, center?.lat, center?.lng, zoom]);
+  return null;
+};
+
 export const GoogleMapView: React.FC<GoogleMapViewProps> = ({
   districtsGeoJson,
   aggregates,
   activeLegend,
   clock,
   selectedDistrictId,
+  center,
+  zoom,
   onSelectDistrict,
   onOpenContextDrawer
 }) => {
@@ -165,6 +193,38 @@ export const GoogleMapView: React.FC<GoogleMapViewProps> = ({
   } | null>(null);
   const [tooltipPos, setTooltipPos] = useState<{ x: number; y: number }>({ x: 20, y: 20 });
   const [isPinned, setIsPinned] = useState(false);
+
+  const isOverTooltipRef = useRef(false);
+  const isPinnedRef = useRef(false);
+  const hoverDismissTimerRef = useRef<any>(null);
+
+  useEffect(() => {
+    isPinnedRef.current = isPinned;
+  }, [isPinned]);
+
+  const handleHoverFeature = (
+    feat: { id: string; name: string; aggregate: MapAggregate } | null,
+    pos?: { x: number; y: number }
+  ) => {
+    if (feat) {
+      if (hoverDismissTimerRef.current) {
+        clearTimeout(hoverDismissTimerRef.current);
+        hoverDismissTimerRef.current = null;
+      }
+      if (!isPinnedRef.current) {
+        setHoveredFeature(feat);
+        if (pos) setTooltipPos(pos);
+      }
+    } else {
+      // 350ms grace period so cursor can travel freely onto the tooltip without flicker
+      if (hoverDismissTimerRef.current) clearTimeout(hoverDismissTimerRef.current);
+      hoverDismissTimerRef.current = setTimeout(() => {
+        if (!isOverTooltipRef.current && !isPinnedRef.current) {
+          setHoveredFeature(null);
+        }
+      }, 350);
+    }
+  };
 
   const apiKey = (import.meta.env.VITE_GOOGLE_MAPS_API_KEY || '').trim();
 
@@ -204,26 +264,23 @@ export const GoogleMapView: React.FC<GoogleMapViewProps> = ({
       <APIProvider apiKey={apiKey}>
         <Map
           id="delhi-nct-map"
-          defaultCenter={{ lat: 28.6139, lng: 77.2090 }}
-          defaultZoom={10.2}
+          defaultCenter={center || { lat: 28.6139, lng: 77.2090 }}
+          defaultZoom={zoom || 10.2}
           mapTypeId={mapType}
           gestureHandling="cooperative"
           disableDefaultUI={false}
           className="w-full h-full"
           internalUsageAttributionIds={['gmp_git_agentskills_v1']}
         >
+          <MapCameraHandler center={center} zoom={zoom} />
+
           {/* District Boundary & AQI Data Layer */}
           <DistrictDataLayer
             enrichedGeoJson={enrichedGeoJson}
             aggregates={aggregates}
             selectedDistrictId={selectedDistrictId}
             onSelectDistrict={onSelectDistrict}
-            onHoverFeature={(feat, pos) => {
-              if (!isPinned) {
-                setHoveredFeature(feat);
-                if (pos) setTooltipPos(pos);
-              }
-            }}
+            onHoverFeature={handleHoverFeature}
             containerRef={containerRef}
           />
 
@@ -283,6 +340,24 @@ export const GoogleMapView: React.FC<GoogleMapViewProps> = ({
           onExploreDistrict={() => onSelectDistrict(hoveredFeature.id)}
           onOpenContext={() => onOpenContextDrawer?.(hoveredFeature.id, hoveredFeature.name)}
           onTogglePin={() => setIsPinned(!isPinned)}
+          onMouseEnter={() => {
+            isOverTooltipRef.current = true;
+            if (hoverDismissTimerRef.current) {
+              clearTimeout(hoverDismissTimerRef.current);
+              hoverDismissTimerRef.current = null;
+            }
+          }}
+          onMouseLeave={() => {
+            isOverTooltipRef.current = false;
+            if (!isPinnedRef.current) {
+              if (hoverDismissTimerRef.current) clearTimeout(hoverDismissTimerRef.current);
+              hoverDismissTimerRef.current = setTimeout(() => {
+                if (!isOverTooltipRef.current && !isPinnedRef.current) {
+                  setHoveredFeature(null);
+                }
+              }, 350);
+            }
+          }}
         />
       )}
 

@@ -633,6 +633,15 @@ export interface AppUserRecord {
   last_login_at?: string | null;
 }
 
+export interface AuthUser {
+  uid: string;
+  email: string | null;
+  displayName: string | null;
+  photoURL?: string | null;
+  role: Role;
+  provider: 'google' | 'password' | 'demo';
+}
+
 export interface AuthLoginPayload {
   email?: string;
   firebase_uid?: string;
@@ -656,5 +665,7 @@ export interface AgentNarrativeResponse {
   generated_at: UtcTime;
   is_fallback?: boolean;
   cached?: boolean;
+  error_notice?: string;
+  limit_exceeded?: boolean;
 }
 

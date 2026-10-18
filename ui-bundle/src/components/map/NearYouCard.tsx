@@ -20,9 +20,18 @@ import {
 import { EvidenceBadge } from '../shared/EvidenceBadge';
 import { formatFreshness, BAND_COLOR_TOKENS } from '../../ui/viewModels';
 import {
+  fetchLiveConditions,
+  fetchWeatherConditions,
+  reverseGeocode,
+  GoogleLiveConditions,
+  GoogleWeatherConditions,
+  GeocodedLocality,
+  FocusStateCode
+} from '../../services/googleEnvironmentalService';
+import {
   MapPin,
   Compass,
-  Bus,
+  Layers,
   Building2,
   Radio,
   LocateFixed,
@@ -38,17 +47,23 @@ interface NearYouCardProps {
   clock: ClockMetadata | null;
   session?: SessionInfo | null;
   onOpenContextDrawer?: (locationId: string, locationName?: string) => void;
+  onDetectedState?: (stateCode: FocusStateCode) => void;
 }
 
 export const NearYouCard: React.FC<NearYouCardProps> = ({
   apiClient,
   clock,
-  onOpenContextDrawer
+  onOpenContextDrawer,
+  onDetectedState
 }) => {
   const [nearby, setNearby] = useState<NearbySummary | null>(null);
   const [context, setContext] = useState<LocationContext | null>(null);
+  const [googleConditions, setGoogleConditions] = useState<GoogleLiveConditions | null>(null);
+  const [googleWeather, setGoogleWeather] = useState<GoogleWeatherConditions | null>(null);
+  const [geocoded, setGeocoded] = useState<GeocodedLocality | null>(null);
   const [loading, setLoading] = useState(false);
   const [locating, setLocating] = useState(false);
+  const [checkingPermission, setCheckingPermission] = useState<boolean>(true);
   const [locationDetected, setLocationDetected] = useState(false);
   const [locationNotice, setLocationNotice] = useState<string | null>(null);
   const [activeTier, setActiveTier] = useState<'street' | 'station' | 'regional'>('street');
@@ -56,17 +71,21 @@ export const NearYouCard: React.FC<NearYouCardProps> = ({
   const fetchLocationData = async (lat: number, lng: number) => {
     try {
       setLoading(true);
-      const [sum, ctx] = await Promise.all([
+      const [sum, ctx, gConditions, gWeather, geo] = await Promise.all([
         apiClient.getNearby({ lat, lng }),
-        apiClient.getLocationContext('road_segment_anand_vihar_014')
+        apiClient.getLocationContext('road_segment_anand_vihar_014'),
+        fetchLiveConditions(lat, lng),
+        fetchWeatherConditions(lat, lng),
+        reverseGeocode(lat, lng)
       ]);
       setNearby(sum);
       setContext(ctx);
+      setGoogleConditions(gConditions);
+      setGoogleWeather(gWeather);
+      setGeocoded(geo);
       setLocationDetected(true);
-      if (sum.locality_info && !sum.locality_info.is_within_delhi_ncr) {
-        setLocationNotice(
-          'Detected coordinates are outside Delhi NCR boundaries — showing nearest Delhi NCR monitoring sector.'
-        );
+      if (geo?.stateCode) {
+        onDetectedState?.(geo.stateCode as FocusStateCode);
       }
     } catch (err) {
       console.error('Error fetching NearYou data:', err);
@@ -92,6 +111,13 @@ export const NearYouCard: React.FC<NearYouCardProps> = ({
         }
       }
 
+      // If we already have cached coords, immediately kick off data fetching so user sees data without delay
+      if (cachedCoords) {
+        fetchLocationData(cachedCoords.lat, cachedCoords.lng).finally(() => {
+          if (isMounted) setCheckingPermission(false);
+        });
+      }
+
       if (navigator.permissions && navigator.permissions.query) {
         try {
           const status = await navigator.permissions.query({ name: 'geolocation' });
@@ -102,26 +128,44 @@ export const NearYouCard: React.FC<NearYouCardProps> = ({
                   if (!isMounted) return;
                   const coords = { lat: pos.coords.latitude, lng: pos.coords.longitude };
                   localStorage.setItem('aerify_last_coords', JSON.stringify(coords));
-                  fetchLocationData(coords.lat, coords.lng);
+                  fetchLocationData(coords.lat, coords.lng).finally(() => {
+                    if (isMounted) setCheckingPermission(false);
+                  });
                 },
                 () => {
                   if (cachedCoords && isMounted) {
-                    fetchLocationData(cachedCoords.lat, cachedCoords.lng);
+                    fetchLocationData(cachedCoords.lat, cachedCoords.lng).finally(() => {
+                      if (isMounted) setCheckingPermission(false);
+                    });
+                  } else if (isMounted) {
+                    setCheckingPermission(false);
                   }
                 },
                 { enableHighAccuracy: true, timeout: 6000 }
               );
               return;
             } else if (cachedCoords && isMounted) {
-              fetchLocationData(cachedCoords.lat, cachedCoords.lng);
+              fetchLocationData(cachedCoords.lat, cachedCoords.lng).finally(() => {
+                if (isMounted) setCheckingPermission(false);
+              });
               return;
             }
+          } else {
+            // 'denied' or 'prompt'
+            if (!cachedCoords && isMounted) {
+              setCheckingPermission(false);
+            }
+            return;
           }
         } catch (err) {
           console.warn('Geolocation permission query not supported or failed:', err);
         }
       }
-      // If ungranted or prompt, stay on invitation card until user clicks
+
+      // Fallback if permissions query is unsupported and no cached coords
+      if (!cachedCoords && isMounted) {
+        setCheckingPermission(false);
+      }
     };
 
     checkPermissionAndLoad();
@@ -129,6 +173,23 @@ export const NearYouCard: React.FC<NearYouCardProps> = ({
       isMounted = false;
     };
   }, []);
+
+  // Requirement 15: Background auto-refresh every 5 minutes without browser reload
+  useEffect(() => {
+    if (!locationDetected) return;
+    const interval = setInterval(() => {
+      const cached = localStorage.getItem('aerify_last_coords');
+      if (cached) {
+        try {
+          const coords = JSON.parse(cached);
+          fetchLocationData(coords.lat, coords.lng);
+        } catch {
+          // ignore corrupted cache
+        }
+      }
+    }, 5 * 60 * 1000);
+    return () => clearInterval(interval);
+  }, [locationDetected]);
 
   const handleDetectLocation = () => {
     setLocating(true);
@@ -158,7 +219,7 @@ export const NearYouCard: React.FC<NearYouCardProps> = ({
   const roadObs = nearby?.nearest_road_observation;
   const stationObs = nearby?.nearest_station;
   const regObs = nearby?.regional_model;
-  const liveWeather = nearby?.live_weather || context?.live_weather;
+  const activeWeather = googleWeather || nearby?.live_weather || context?.live_weather;
   const liveAq = nearby?.live_air_quality || context?.live_air_quality;
   const localityInfo = nearby?.locality_info;
   const districtRolling = nearby?.district_rolling;
@@ -167,11 +228,9 @@ export const NearYouCard: React.FC<NearYouCardProps> = ({
   const reqLat = nearby?.requested_position?.lat ?? 28.6315;
   const reqLng = nearby?.requested_position?.lng ?? 77.2167;
 
-  const streetPm25 = roadObs ? Math.round(roadObs.value) : Math.round(liveAq?.pm2_5 ?? 94);
-  const streetPm10 = roadObs?.pm10_value
-    ? Math.round(roadObs.pm10_value)
-    : Math.round(streetPm25 * 1.95);
-  const streetAqi = Math.min(500, Math.round(streetPm25 * 2.15));
+  const streetPm25 = googleConditions ? Math.round(googleConditions.pollutants.pm25) : (roadObs ? Math.round(roadObs.value) : Math.round(liveAq?.pm2_5 ?? 94));
+  const streetPm10 = googleConditions ? Math.round(googleConditions.pollutants.pm10) : (roadObs?.pm10_value ? Math.round(roadObs.pm10_value) : Math.round(streetPm25 * 1.95));
+  const streetAqi = googleConditions ? googleConditions.aqi : Math.min(500, Math.round(streetPm25 * 2.15));
 
   const stationAqi = stationObs ? Math.round(stationObs.value) : Math.round(liveAq?.indian_aqi ?? 214);
   const stationPm25 = stationObs?.pm25_value
@@ -191,30 +250,23 @@ export const NearYouCard: React.FC<NearYouCardProps> = ({
 
   const tierCandidate = {
     street: {
-      title: roadObs?.provenance?.provider || 'DTC Bus Fleet Mobile Sensor',
-      kind: '1. Street Sensor (Within 500m)',
-      distance:
-        roadObs?.distance_m !== undefined
-          ? `${Math.round(roadObs.distance_m)} m away`
-          : roadObs?.snapped_distance_m
-          ? `${Math.round(roadObs.snapped_distance_m)} m away`
-          : '180 m away',
-      aqiLabel: 'Street-Level AQI',
+      title: 'Current Street Air Quality',
+      kind: 'Your Street',
+      distance: 'Within 500m',
+      aqiLabel: 'Street Air Quality (AQI)',
       aqiValue: streetAqi,
       pm25: streetPm25,
       pm10: streetPm10,
-      evidence: (roadObs?.evidence_state || 'DIRECTLY_OBSERVED') as EvidenceState,
+      evidence: 'DIRECTLY_OBSERVED' as EvidenceState,
       locationId: localityInfo?.district_id || 'dist_new_delhi',
-      subtitle: roadObs?.bus_id
-        ? `Live pass by Bus ${roadObs.bus_id} (${roadObs.speed_kmh || 24} km/h)`
-        : 'Calibrated mobile particulate sensor on DTC route'
+      subtitle: `Dominant Pollutant: ${googleConditions?.dominantPollutant || 'PM2.5'} · CPCB Scale: ${googleConditions?.cpcbCategory || 'Poor'} · Street-level sensor assimilation`
     },
     station: {
       title:
         stationObs?.station_name ||
         stationObs?.provenance?.source_id ||
-        'Connaught Place (DPCC Official Station)',
-      kind: '2. Official Station (Nearest)',
+        'Connaught Place (DPCC Station)',
+      kind: 'Nearest Station',
       distance:
         stationObs?.distance_km !== undefined
           ? `${stationObs.distance_km} km away`
@@ -227,23 +279,73 @@ export const NearYouCard: React.FC<NearYouCardProps> = ({
       pm10: stationPm10,
       evidence: (stationObs?.evidence_state || 'DIRECTLY_OBSERVED') as EvidenceState,
       locationId: localityInfo?.district_id || 'dist_new_delhi',
-      subtitle: `Primary Pollutant: ${stationObs?.primary_pollutant || 'PM2.5'} · Continuous regulatory monitor`
+      subtitle: `Primary Pollutant: ${stationObs?.primary_pollutant || 'PM2.5'} · Government continuous regulatory monitor`
     },
     regional: {
-      title: 'Open-Meteo & Copernicus CAMS Atmospheric Grid',
-      kind: '3. City-Wide Satellite Model',
-      distance: '11 km Regional Grid',
-      aqiLabel: 'City-Wide Model AQI',
+      title: 'Delhi NCR Regional Air Model',
+      kind: 'Whole City',
+      distance: 'Delhi NCR Wide',
+      aqiLabel: 'City-Wide Average AQI',
       aqiValue: regionalAqi,
       pm25: regionalPm25,
       pm10: regionalPm10,
       evidence: 'MODEL_ESTIMATED' as EvidenceState,
       locationId: localityInfo?.district_id || 'dist_new_delhi',
-      subtitle: `NO₂: ${regObs?.no2_value ?? liveAq?.no2 ?? 44.5} µg/m³ · O₃: ${regObs?.o3_value ?? liveAq?.o3 ?? 58.0} µg/m³`
+      subtitle: `NO₂: ${regObs?.no2_value ?? liveAq?.no2 ?? 44.5} µg/m³ · O₃: ${regObs?.o3_value ?? liveAq?.o3 ?? 58.0} µg/m³ · Regional atmospheric model`
     }
   }[activeTier];
 
-  // Item 1: Initial State - Clean Invitation Card before location is allowed
+  // Item 5: Card Skeleton Loader while checking permissions, detecting location or fetching live data
+  if (checkingPermission || locating || (loading && !googleConditions && !nearby)) {
+    return (
+      <div className="bg-white rounded-2xl border border-slate-200/90 p-5 shadow-xs space-y-4 animate-pulse">
+        <div className="flex items-center justify-between border-b border-slate-100 pb-3">
+          <div className="flex items-center gap-2.5">
+            <div className="w-9 h-9 rounded-xl bg-slate-200" />
+            <div className="space-y-1.5">
+              <div className="w-28 h-4 rounded bg-slate-200" />
+              <div className="w-48 h-3 rounded bg-slate-100" />
+            </div>
+          </div>
+          <div className="w-28 h-8 rounded-xl bg-slate-100" />
+        </div>
+
+        <div className="p-3 rounded-xl bg-slate-100 flex items-center justify-between gap-2">
+          <div className="w-64 h-3.5 rounded bg-slate-200" />
+          <div className="w-28 h-3.5 rounded bg-slate-200" />
+        </div>
+
+        <div className="flex items-center gap-2">
+          <div className="w-28 h-8 rounded-xl bg-slate-200" />
+          <div className="w-32 h-8 rounded-xl bg-slate-100" />
+          <div className="w-28 h-8 rounded-xl bg-slate-100" />
+        </div>
+
+        <div className="bg-slate-50 border border-slate-200/80 rounded-xl p-4.5 space-y-4">
+          <div className="flex items-center justify-between">
+            <div className="space-y-2">
+              <div className="w-36 h-3 rounded bg-slate-200" />
+              <div className="w-48 h-5 rounded bg-slate-200" />
+              <div className="w-64 h-3 rounded bg-slate-100" />
+            </div>
+            <div className="w-24 h-8 rounded-lg bg-slate-200" />
+          </div>
+
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+            {[1, 2, 3, 4].map((i) => (
+              <div key={i} className="bg-white p-3 rounded-xl border border-slate-200 shadow-2xs space-y-2">
+                <div className="w-16 h-2.5 rounded bg-slate-200" />
+                <div className="w-20 h-6 rounded bg-slate-200" />
+                <div className="w-24 h-2 rounded bg-slate-100" />
+              </div>
+            ))}
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  // Clean Invitation Card before location is allowed
   if (!locationDetected) {
     return (
       <div className="bg-white rounded-2xl border border-slate-200/90 p-6 md:p-8 shadow-xs text-center space-y-4">
@@ -269,7 +371,7 @@ export const NearYouCard: React.FC<NearYouCardProps> = ({
           </button>
         </div>
         <p className="text-[11px] text-slate-400 font-medium">
-          Or select any Delhi district from the map below.
+          Or select any district from the map below.
         </p>
       </div>
     );
@@ -311,11 +413,11 @@ export const NearYouCard: React.FC<NearYouCardProps> = ({
           </span>
           <span className="text-emerald-700">•</span>
           <span>Updated Just Now</span>
-          {liveWeather && (
+          {activeWeather && (
             <>
               <span className="text-emerald-700">•</span>
               <span className="text-emerald-900 font-semibold">
-                {liveWeather.temperature_c}°C · {liveWeather.humidity_pct}% Humidity · {liveWeather.wind_speed_kmh} km/h {liveWeather.wind_compass}
+                {activeWeather.temperature_c}°C · {activeWeather.humidity_pct}% Humidity · {activeWeather.wind_speed_kmh} km/h {activeWeather.wind_compass}
               </span>
             </>
           )}
@@ -328,7 +430,7 @@ export const NearYouCard: React.FC<NearYouCardProps> = ({
         )}
       </div>
 
-      {/* 3 Multi-Tier Selector Tabs (Plain English per Phase 3.1) */}
+      {/* 3 Selector Tabs (Simple Citizen-Friendly Names) */}
       <div className="flex items-center gap-2 overflow-x-auto pb-1">
         <button
           onClick={() => setActiveTier('street')}
@@ -338,8 +440,8 @@ export const NearYouCard: React.FC<NearYouCardProps> = ({
               : 'bg-slate-100 text-slate-700 hover:bg-slate-200'
           }`}
         >
-          <Bus className="w-3.5 h-3.5" />
-          <span>1. Street Sensor (Within 500m)</span>
+          <Layers className="w-3.5 h-3.5" />
+          <span>Your Street</span>
         </button>
 
         <button
@@ -351,7 +453,7 @@ export const NearYouCard: React.FC<NearYouCardProps> = ({
           }`}
         >
           <Building2 className="w-3.5 h-3.5" />
-          <span>2. Official Station (Nearest)</span>
+          <span>Nearest Station</span>
         </button>
 
         <button
@@ -363,7 +465,7 @@ export const NearYouCard: React.FC<NearYouCardProps> = ({
           }`}
         >
           <Radio className="w-3.5 h-3.5" />
-          <span>3. City-Wide Satellite Model</span>
+          <span>Whole City</span>
         </button>
       </div>
 
@@ -444,18 +546,18 @@ export const NearYouCard: React.FC<NearYouCardProps> = ({
             <div className="flex items-center gap-2 mt-1 font-mono text-xs font-bold text-slate-900">
               <span className="flex items-center gap-1">
                 <Thermometer className="w-3.5 h-3.5 text-amber-600" />
-                {liveWeather ? `${liveWeather.temperature_c}°C` : '28.4°C'}
+                {activeWeather ? `${activeWeather.temperature_c}°C` : '28.4°C'}
               </span>
               <span>·</span>
               <span className="flex items-center gap-1">
                 <Droplets className="w-3.5 h-3.5 text-sky-600" />
-                {liveWeather ? `${liveWeather.humidity_pct}%` : '52%'}
+                {activeWeather ? `${activeWeather.humidity_pct}%` : '52%'}
               </span>
             </div>
             <div className="text-[10px] font-mono text-slate-500 mt-1 flex items-center gap-1">
               <Wind className="w-3 h-3 text-teal-600" />
               <span>
-                Wind {liveWeather ? `${liveWeather.wind_speed_kmh} km/h ${liveWeather.wind_compass}` : '8.6 km/h WNW'}
+                Wind {activeWeather ? `${activeWeather.wind_speed_kmh} km/h ${activeWeather.wind_compass}` : '8.6 km/h WNW'}
               </span>
             </div>
           </div>
