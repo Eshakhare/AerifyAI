@@ -39,7 +39,7 @@ export class HttpApi implements ApiClient {
   private activeUserEmail: string | null = null;
   private bearerToken: string | null = null;
 
-  constructor(baseUrl: string = (import.meta as any).env?.VITE_API_BASE_URL || '/v1') {
+  constructor(baseUrl: string = (import.meta as any).env?.VITE_API_BASE_URL || '/api/v1') {
     this.baseUrl = baseUrl.replace(/\/$/, '');
   }
 

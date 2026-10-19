@@ -12,8 +12,10 @@ _BACKEND_DIR = str(Path(__file__).resolve().parents[1])
 if _BACKEND_DIR not in sys.path:
     sys.path.insert(0, _BACKEND_DIR)
 
-from fastapi import Depends, FastAPI, Header, HTTPException, Query
+from fastapi import APIRouter, Depends, FastAPI, Header, HTTPException, Query
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import FileResponse, RedirectResponse
+from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel, Field
 from sqlalchemy import or_, text
 from sqlalchemy.orm import Session
@@ -160,6 +162,8 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+api_router = APIRouter()
 
 
 ROLE_CAPABILITIES: dict[str, list[str]] = {
@@ -373,7 +377,7 @@ def resolve_caller_session(
     }
 
 
-@app.get("/healthz")
+@api_router.get("/healthz")
 def healthz(db: Session = Depends(get_db)) -> dict[str, Any]:
     postgis_ver = db.execute(text("SELECT PostGIS_Version()")).scalar()
     bus_count = db.execute(text("SELECT COUNT(*) FROM mobile_sensor_telemetry")).scalar() or 0
@@ -386,7 +390,7 @@ def healthz(db: Session = Depends(get_db)) -> dict[str, Any]:
     }
 
 
-@app.get("/v1/me")
+@api_router.get("/v1/me")
 def get_me(session: dict[str, Any] = Depends(resolve_caller_session)) -> dict[str, Any]:
     return session
 
@@ -398,7 +402,7 @@ class AuthLoginRequest(BaseModel):
     requested_role: Literal["PUBLIC", "OFFICER", "SUPERVISOR"] | None = None
 
 
-@app.post("/v1/auth/login")
+@api_router.post("/v1/auth/login")
 def login_and_resolve_cloudsql_role(
     req: AuthLoginRequest,
     db: Session = Depends(get_db),
@@ -454,7 +458,7 @@ def login_and_resolve_cloudsql_role(
     }
 
 
-@app.get("/v1/auth/users")
+@api_router.get("/v1/auth/users")
 def list_cloudsql_users(db: Session = Depends(get_db)) -> dict[str, Any]:
     rows = db.query(AppUser).order_by(AppUser.created_at.asc()).all()
     return {
@@ -482,12 +486,12 @@ class ClockUpdateRequest(BaseModel):
     scenario_id: str | None = None
 
 
-@app.get("/v1/clock")
+@api_router.get("/v1/clock")
 def get_clock() -> dict[str, Any]:
     return _get_clock_dict()
 
 
-@app.post("/v1/clock")
+@api_router.post("/v1/clock")
 def update_clock(req: ClockUpdateRequest) -> dict[str, Any]:
     now_iso = datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
     _RUNTIME_CLOCK_STATE["clock_mode"] = req.clock_mode
@@ -501,7 +505,7 @@ def update_clock(req: ClockUpdateRequest) -> dict[str, Any]:
     return _get_clock_dict()
 
 
-@app.get("/v1/public/legends")
+@api_router.get("/v1/public/legends")
 def get_legends() -> dict[str, Any]:
     return {"schema_version": "0.9", "legends": _LEGEND_BANDS_CACHE}
 
@@ -651,8 +655,8 @@ def _build_district_aggregates(
     return items
 
 
-@app.get("/v1/public/cities/delhi/overview")
-@app.get("/v1/public/city-overview")
+@api_router.get("/v1/public/cities/delhi/overview")
+@api_router.get("/v1/public/city-overview")
 def get_city_overview(
     metric: str = Query(default="PM2_5_MASS"),
     db: Session = Depends(get_db),
@@ -660,7 +664,7 @@ def get_city_overview(
     return _build_district_aggregates(db, metric=metric)
 
 
-@app.get("/v1/public/districts/{district_id}/summary")
+@api_router.get("/v1/public/districts/{district_id}/summary")
 def get_district_rolling_summary(
     district_id: str,
     db: Session = Depends(get_db),
@@ -776,7 +780,7 @@ def get_district_rolling_summary(
     }
 
 
-@app.get("/v1/public/districts/{district_id}/cells")
+@api_router.get("/v1/public/districts/{district_id}/cells")
 def get_district_cells(
     district_id: str,
     metric: str = Query(default="PM2_5_MASS"),
@@ -822,7 +826,7 @@ def get_district_cells(
     return items
 
 
-@app.get("/v1/public/cells/{cell_id}/roads")
+@api_router.get("/v1/public/cells/{cell_id}/roads")
 def get_cell_roads(
     cell_id: str,
     metric: str = Query(default="PM10_MASS"),
@@ -867,7 +871,7 @@ def get_cell_roads(
     return items
 
 
-@app.get("/v1/public/nearby")
+@api_router.get("/v1/public/nearby")
 def get_nearby_summary(
     lat: float = Query(default=28.6315),
     lng: float = Query(default=77.2167),
@@ -1118,8 +1122,8 @@ def get_nearby_summary(
     }
 
 
-@app.get("/v1/public/locations/{location_id}/context")
-@app.get("/v1/public/location-context/{location_id}")
+@api_router.get("/v1/public/locations/{location_id}/context")
+@api_router.get("/v1/public/location-context/{location_id}")
 def get_location_context(
     location_id: str,
     lat: float = Query(default=28.6469),
@@ -1194,8 +1198,8 @@ def get_location_context(
 
 
 
-@app.get("/v1/public/zones")
-@app.get("/v1/zones")
+@api_router.get("/v1/public/zones")
+@api_router.get("/v1/zones")
 def get_zones(db: Session = Depends(get_db)) -> list[dict[str, Any]]:
     zones = db.query(Zone).all()
     zv_map = {zv.id: zv for zv in db.query(ZoneVersionRecord).all()}
@@ -1223,8 +1227,8 @@ def get_zones(db: Session = Depends(get_db)) -> list[dict[str, Any]]:
     return result
 
 
-@app.get("/v1/public/scenarios")
-@app.get("/v1/scenarios")
+@api_router.get("/v1/public/scenarios")
+@api_router.get("/v1/scenarios")
 def list_scenarios(db: Session = Depends(get_db)) -> dict[str, Any]:
     rows = db.query(ScenarioRunRecord).order_by(ScenarioRunRecord.case_id).all()
     cases = []
@@ -1331,14 +1335,14 @@ def _build_public_intervention_response(db: Session, int_rec: InterventionRecord
     }
 
 
-@app.get("/v1/public/interventions")
+@api_router.get("/v1/public/interventions")
 def list_interventions(db: Session = Depends(get_db)) -> list[dict[str, Any]]:
     rows = db.query(InterventionRecord).all()
     return [_build_public_intervention_response(db, r) for r in rows]
 
 
-@app.get("/v1/public/interventions/{intervention_id}")
-@app.get("/v1/public/scenarios/{intervention_id}")
+@api_router.get("/v1/public/interventions/{intervention_id}")
+@api_router.get("/v1/public/scenarios/{intervention_id}")
 def get_public_intervention(intervention_id: str, db: Session = Depends(get_db)) -> dict[str, Any]:
     int_rec = db.query(InterventionRecord).filter(InterventionRecord.id == intervention_id).first()
     if not int_rec:
@@ -1356,7 +1360,7 @@ def get_public_intervention(intervention_id: str, db: Session = Depends(get_db))
     return _build_public_intervention_response(db, int_rec)
 
 
-@app.get("/v1/public/overlaps/{overlap_id}")
+@api_router.get("/v1/public/overlaps/{overlap_id}")
 def get_action_overlap(overlap_id: str, db: Session = Depends(get_db)) -> dict[str, Any]:
     row = db.query(ActionOverlapRecord).filter(ActionOverlapRecord.id == overlap_id).first()
     if not row:
@@ -1366,8 +1370,8 @@ def get_action_overlap(overlap_id: str, db: Session = Depends(get_db)) -> dict[s
     return row.payload
 
 
-@app.get("/v1/public/camera-events")
-@app.get("/v1/public/camera-events/{event_id}")
+@api_router.get("/v1/public/camera-events")
+@api_router.get("/v1/public/camera-events/{event_id}")
 def get_camera_event(
     event_id: str = "cam_anand_vihar_dust_001",
     db: Session = Depends(get_db),
@@ -1384,7 +1388,7 @@ def get_camera_event(
     return payload
 
 
-@app.get("/v1/public/narratives/{agent_type}/{target_id}")
+@api_router.get("/v1/public/narratives/{agent_type}/{target_id}")
 def get_agent_narrative(
     agent_type: AgentType,
     target_id: str,
@@ -1420,7 +1424,7 @@ class CreateInterventionDraftRequest(BaseModel):
     checkpoint_offsets_minutes: list[int] = Field(default_factory=lambda: [0, 180, 360, 720, 1440])
 
 
-@app.get("/v1/officer/interventions")
+@api_router.get("/v1/officer/interventions")
 def list_officer_interventions(
     db: Session = Depends(get_db),
     session: dict[str, Any] = Depends(resolve_caller_session),
@@ -1429,7 +1433,7 @@ def list_officer_interventions(
     return [_build_public_intervention_response(db, r) for r in rows]
 
 
-@app.post("/v1/officer/interventions")
+@api_router.post("/v1/officer/interventions")
 def create_intervention_draft(
     req: CreateInterventionDraftRequest,
     db: Session = Depends(get_db),
@@ -1521,7 +1525,7 @@ def create_intervention_draft(
     return _build_public_intervention_response(db, int_rec)
 
 
-@app.post("/v1/officer/interventions/{intervention_id}/freeze")
+@api_router.post("/v1/officer/interventions/{intervention_id}/freeze")
 def freeze_evaluation_plan(
     intervention_id: str,
     db: Session = Depends(get_db),
@@ -1544,7 +1548,7 @@ def freeze_evaluation_plan(
     return _build_public_intervention_response(db, int_rec)
 
 
-@app.post("/v1/officer/interventions/{intervention_id}/start")
+@api_router.post("/v1/officer/interventions/{intervention_id}/start")
 def start_intervention_action(
     intervention_id: str,
     db: Session = Depends(get_db),
@@ -1567,7 +1571,7 @@ class CompleteActionRequest(BaseModel):
     wind_dir_shift_deg: float = 12.0
 
 
-@app.post("/v1/officer/interventions/{intervention_id}/complete")
+@api_router.post("/v1/officer/interventions/{intervention_id}/complete")
 def complete_intervention_action(
     intervention_id: str,
     req: CompleteActionRequest | None = None,
@@ -1705,7 +1709,7 @@ class AttachMediaRequest(BaseModel):
     media_type: Literal["image", "video"] = "image"
 
 
-@app.post("/v1/officer/interventions/{intervention_id}/media")
+@api_router.post("/v1/officer/interventions/{intervention_id}/media")
 def attach_intervention_media(
     intervention_id: str,
     req: AttachMediaRequest,
@@ -1762,7 +1766,7 @@ class SubmitCorrectionRequest(BaseModel):
     new_action_completed_at: str | None = None
 
 
-@app.post("/v1/officer/interventions/{intervention_id}/correction")
+@api_router.post("/v1/officer/interventions/{intervention_id}/correction")
 def submit_supervisor_correction(
     intervention_id: str,
     req: SubmitCorrectionRequest,
@@ -1806,7 +1810,7 @@ class CheckpointTaskPayload(BaseModel):
     checkpoint_offset_minutes: int = 180
 
 
-@app.post("/internal/tasks/evaluate-checkpoint")
+@api_router.post("/internal/tasks/evaluate-checkpoint")
 def handle_cloud_task_checkpoint(
     payload: CheckpointTaskPayload,
     db: Session = Depends(get_db),
@@ -1818,7 +1822,7 @@ def handle_cloud_task_checkpoint(
     return {"status": "evaluated", "intervention_id": int_rec.id, "evaluation_count": len(evals)}
 
 
-@app.post("/v1/internal/ingest/open-meteo")
+@api_router.post("/v1/internal/ingest/open-meteo")
 def trigger_open_meteo_ingest(
     location_id: str = "anand_vihar_demo_node",
     lat: float = 28.6469,
@@ -1826,3 +1830,80 @@ def trigger_open_meteo_ingest(
     db: Session = Depends(get_db),
 ) -> dict[str, Any]:
     return ingest_open_meteo_context(db=db, location_id=location_id, lat=lat, lon=lon)
+
+
+# Mount API endpoints under both `/api` and root `/`
+app.include_router(api_router, prefix="/api")
+app.include_router(api_router)
+
+
+@app.get("/api", include_in_schema=False)
+@app.get("/api/", include_in_schema=False)
+def api_welcome() -> dict[str, Any]:
+    return {
+        "service": "Aerify AI Governance & Air Quality API",
+        "status": "healthy",
+        "version": "0.10.0",
+        "docs_url": "/api/docs",
+        "openapi_url": "/api/openapi.json",
+        "endpoints": {
+            "health": "/api/healthz",
+            "v1": "/api/v1",
+            "city_overview": "/api/v1/public/city-overview",
+            "clock": "/api/v1/clock",
+            "legends": "/api/v1/public/legends",
+        },
+    }
+
+
+@app.get("/api/docs", include_in_schema=False)
+def api_docs_redirect():
+    return RedirectResponse(url="/docs")
+
+
+@app.get("/api/openapi.json", include_in_schema=False)
+def api_openapi():
+    return app.openapi()
+
+
+# Frontend SPA & Static Assets Mounting
+def _find_frontend_dist() -> Path | None:
+    candidates = [
+        Path(__file__).resolve().parent / "static",
+        Path(__file__).resolve().parents[1] / "static",
+        Path(__file__).resolve().parents[2] / "ui-bundle" / "dist",
+    ]
+    for p in candidates:
+        if p.exists() and (p / "index.html").is_file():
+            return p
+    return None
+
+
+FRONTEND_DIST = _find_frontend_dist()
+if FRONTEND_DIST:
+    assets_dir = FRONTEND_DIST / "assets"
+    if assets_dir.exists():
+        app.mount("/assets", StaticFiles(directory=str(assets_dir)), name="frontend-assets")
+
+
+@app.get("/{full_path:path}", include_in_schema=False)
+async def serve_spa(full_path: str):
+    if full_path.startswith(("api/", "v1/", "internal/", "healthz", "docs", "openapi.json")):
+        raise HTTPException(status_code=404, detail="API route not found")
+
+    dist = FRONTEND_DIST or _find_frontend_dist()
+    if dist:
+        file_path = dist / full_path
+        if file_path.is_file():
+            return FileResponse(file_path)
+        index_file = dist / "index.html"
+        if index_file.is_file():
+            return FileResponse(index_file)
+
+    return {
+        "status": "ok",
+        "service": "Aerify AI",
+        "message": "Aerify AI Backend API is online. Frontend static assets will be served here once built.",
+        "api_docs": "/api/docs",
+        "api_health": "/api/healthz",
+    }

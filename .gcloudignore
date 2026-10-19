@@ -1,0 +1,11 @@
+.gcloudignore
+.git/
+.gitignore
+backend/.venv/
+ui-bundle/node_modules/
+.pytest_cache/
+backend/.pytest_cache/
+*.pptx
+*.pyc
+__pycache__/
+backend/__pycache__/
