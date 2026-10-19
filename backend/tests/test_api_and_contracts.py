@@ -182,3 +182,40 @@ def test_contiguous_city_overview_and_district_rolling_summary():
     assert len(summary["cpcb_stations"]) >= 2
 
 
+def test_unified_api_routes_and_spa_fallback():
+    # 1. Test /api welcome summary
+    r_api = client.get("/api")
+    assert r_api.status_code == 200
+    body = r_api.json()
+    assert body["status"] == "healthy"
+    assert "/api/healthz" in body["endpoints"]["health"]
+
+    # 2. Test /api/healthz
+    r_health = client.get("/api/healthz")
+    assert r_health.status_code == 200
+    assert r_health.json()["status"] == "ok"
+
+    # 3. Test /api/v1/public/city-overview
+    r_city = client.get("/api/v1/public/city-overview?metric=PM2_5_MASS")
+    assert r_city.status_code == 200
+    assert len(r_city.json()) == 11
+
+    # 4. Test /api/v1/me with role header
+    r_me = client.get("/api/v1/me", headers={"X-Aerify-Role": "SUPERVISOR"})
+    assert r_me.status_code == 200
+    assert r_me.json()["role"] == "SUPERVISOR"
+
+    # 5. Test root / and SPA route fallback
+    r_root = client.get("/")
+    assert r_root.status_code == 200
+    assert "html" in r_root.headers.get("content-type", "")
+
+    r_spa = client.get("/supervisor")
+    assert r_spa.status_code == 200
+    assert "html" in r_spa.headers.get("content-type", "")
+
+    # 6. Test 404 on invalid API path
+    r_404 = client.get("/api/nonexistent-endpoint")
+    assert r_404.status_code == 404
+
+
